@@ -2,6 +2,10 @@
 
 An interactive, single-file HTML dashboard that serves as a complete Technical Program Management (TPM) playbook for building a Jio-scale, production-ready live OTT streaming platform on AWS.
 
+# Jio AWS Hyperscale Streaming Platform
+TPM Master Playbook — AWS Live Streaming Architecture
+
+Live site: https://Samyvishnu.github.io/jio-aws-capstone
 ---
 
 ## Overview
