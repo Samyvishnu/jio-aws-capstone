@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jio AWS Capstone — TPM Playbook</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e28;
+  --bg4: #222636;
+  --border: #2a2f3f;
+  --border2: #343a50;
+  --text: #e8eaf0;
+  --text2: #9ba3bc;
+  --text3: #616880;
+  --accent: #4f8ef7;
+  --accent2: #2d5fcc;
+  --green: #3dd68c;
+  --green2: #1a7a4a;
+  --amber: #f5a623;
+  --amber2: #7a4f0d;
+  --red: #f05151;
+  --red2: #7a1f1f;
+  --purple: #9b7ff7;
+  --purple2: #4a2fb3;
+  --teal: #2fcfc8;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sora', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#0d1629 0%,#111827 50%,#0a1020 100%);border-bottom:1px solid var(--border);padding:32px 40px 28px;position:relative;overflow:hidden}
+.hdr::before{content:'';position:absolute;top:-60px;right:-60px;width:300px;height:300px;background:radial-gradient(circle,rgba(79,142,247,0.06) 0%,transparent 70%);pointer-events:none}
+.hdr-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(79,142,247,0.12);border:1px solid rgba(79,142,247,0.3);color:var(--accent);font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:4px;margin-bottom:14px;letter-spacing:0.05em}
+.hdr-badge span{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.hdr h1{font-size:28px;font-weight:700;color:#fff;letter-spacing:-0.02em;line-height:1.2;margin-bottom:6px}
+.hdr h1 em{color:var(--accent);font-style:normal}
+.hdr p{color:var(--text2);font-size:13px;max-width:600px;line-height:1.7}
+.hdr-meta{display:flex;gap:20px;margin-top:18px;flex-wrap:wrap}
+.meta-pill{background:var(--bg3);border:1px solid var(--border);padding:5px 12px;border-radius:20px;font-size:11px;color:var(--text2);font-family:var(--mono)}
+.meta-pill strong{color:var(--text)}
+
+/* PROGRESS BAR */
+.progress-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 40px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.prog-label{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap}
+.prog-track{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:2px;transition:width 0.4s ease;width:0%}
+.prog-pct{font-size:11px;font-family:var(--mono);color:var(--accent);min-width:32px;text-align:right}
+.phase-dots{display:flex;gap:4px;align-items:center}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);cursor:pointer;transition:all 0.2s}
+.pdot.done{background:var(--green);border-color:var(--green)}
+.pdot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 6px rgba(79,142,247,0.5)}
+
+/* LAYOUT */
+.container{max-width:980px;margin:0 auto;padding:32px 32px 80px}
+
+/* SECTION HEADERS */
+.sect-intro{margin-bottom:32px}
+.sect-intro h2{font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px}
+.sect-intro p{color:var(--text2);font-size:13px;line-height:1.7}
+
+/* PHASE CARDS */
+.phase-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;transition:border-color 0.2s}
+.phase-card:hover{border-color:var(--border2)}
+.phase-card.open{border-color:var(--border2)}
+
+.phase-header{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none}
+.phase-header:hover{background:rgba(255,255,255,0.02)}
+.phase-num{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+.phase-meta{flex:1;min-width:0}
+.phase-title{font-size:14px;font-weight:600;color:var(--text)}
+.phase-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+.phase-tags{display:flex;gap:6px;margin-left:auto;align-items:center;flex-shrink:0}
+.tag{padding:3px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);letter-spacing:0.03em;font-weight:500}
+.tag-free{background:rgba(61,214,140,0.1);border:1px solid rgba(61,214,140,0.25);color:var(--green)}
+.tag-cost{background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.25);color:var(--amber)}
+.tag-sim{background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.25);color:var(--accent)}
+.chevron{color:var(--text3);font-size:16px;transition:transform 0.25s;margin-left:8px}
+.open .chevron{transform:rotate(90deg)}
+.phase-done-check{color:var(--green);font-size:14px;margin-left:4px}
+
+.phase-body{display:none;border-top:1px solid var(--border);padding:0}
+.open .phase-body{display:block}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;font-size:12px;font-family:var(--mono);color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-body{display:none;padding:20px}
+.tab-body.active{display:block}
+
+/* OBJECTIVE BOX */
+.objective{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:20px}
+.objective-label{font-size:10px;font-family:var(--mono);color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px}
+.objective p{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* STEPS */
+.step{margin-bottom:20px}
+.step-label{font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.step-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.step p{font-size:13px;color:var(--text2);margin-bottom:8px;line-height:1.6}
+
+/* CODE BLOCKS */
+.code-block{background:#080a10;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.code-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.code-lang{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:0.05em}
+.code-title{font-size:11px;font-family:var(--mono);color:var(--text2)}
+.copy-btn{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all 0.15s;letter-spacing:0.03em}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.copy-btn.copied{border-color:var(--green);color:var(--green)}
+pre{padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.7;color:#c9d1e0}
+pre .c{color:var(--text3)}
+pre .k{color:#7dd3fc}
+pre .s{color:#86efac}
+pre .v{color:#fbbf24}
+pre .f{color:#c084fc}
+
+/* ALERT BOXES */
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:12px;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.alert-warn{background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);color:#d4944d}
+.alert-info{background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.2);color:#7ab4f5}
+.alert-success{background:rgba(61,214,140,0.08);border:1px solid rgba(61,214,140,0.2);color:#3dd68c}
+.alert-danger{background:rgba(240,81,81,0.08);border:1px solid rgba(240,81,81,0.2);color:#f07a7a}
+
+/* CHECKLIST */
+.checklist{list-style:none;margin:0 0 16px}
+.checklist li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2)}
+.checklist li:last-child{border-bottom:none}
+.check-box{width:18px;height:18px;border:1px solid var(--border2);border-radius:4px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all 0.15s;margin-top:1px}
+.check-box.done{background:var(--green2);border-color:var(--green);color:var(--green)}
+
+/* VALIDATION TABLE */
+.vtable{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+.vtable th{text-align:left;padding:8px 12px;background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:0.05em;border-bottom:1px solid var(--border)}
+.vtable td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+.vtable tr:last-child td{border-bottom:none}
+.vtable td:first-child{font-family:var(--mono);color:var(--text);font-size:11px}
+.vtable .pass{color:var(--green)}
+.vtable .fail{color:var(--red)}
+.vtable .pending{color:var(--amber)}
+
+/* PHASE COMPLETE BTN */
+.mark-done-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(61,214,140,0.08);border:1px solid rgba(61,214,140,0.25);color:var(--green);font-family:var(--mono);font-size:11px;padding:6px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;margin-top:4px}
+.mark-done-btn:hover{background:rgba(61,214,140,0.15)}
+.mark-done-btn.done{background:rgba(61,214,140,0.15);border-color:var(--green)}
+
+/* SERVICE MAP */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:16px}
+.svc-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.svc-name{font-size:11px;font-family:var(--mono);color:var(--text)}
+.svc-desc{font-size:10px;color:var(--text3);line-height:1.4}
+.svc-tier{font-size:9px;padding:2px 6px;border-radius:3px;width:fit-content}
+
+/* TPM NOTES */
+.tpm-note{background:rgba(155,127,247,0.06);border:1px solid rgba(155,127,247,0.2);border-radius:8px;padding:12px 16px;margin-bottom:16px}
+.tpm-note-label{font-size:10px;font-family:var(--mono);color:var(--purple);letter-spacing:0.08em;margin-bottom:6px}
+.tpm-note p{font-size:12px;color:var(--text2);line-height:1.6}
+.tpm-note ul{list-style:none;padding:0;margin:6px 0 0}
+.tpm-note ul li{font-size:12px;color:var(--text2);padding:2px 0;line-height:1.5}
+.tpm-note ul li::before{content:'→ ';color:var(--purple);font-family:var(--mono)}
+
+/* ARCH OVERVIEW */
+.arch-flow{display:flex;flex-direction:column;gap:2px;margin-bottom:20px;align-items:center}
+.arch-layer{display:flex;align-items:center;gap:8px;width:100%}
+.arch-box{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;font-family:var(--mono);color:var(--text);text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arch-arrow{color:var(--text3);font-size:12px;text-align:center;padding:2px 0;width:100%}
+.layer-label{font-size:10px;color:var(--text3);width:80px;flex-shrink:0;text-align:right;font-family:var(--mono)}
+
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+.sum-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.sum-num{font-size:26px;font-weight:700;font-family:var(--mono);margin-bottom:4px}
+.sum-label{font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-badge"><span></span>GREENFIELD · LIVE</div>
+  <h1>Jio <em>AWS Capstone</em> — TPM Playbook</h1>
+  <p>Hyperscale OTT Streaming Platform · 13 Phases · Simulation-First → AWS Free Tier · 22 AWS Services · Every CLI Command</p>
+  <div class="hdr-meta">
+    <span class="meta-pill"><strong>Role:</strong> Technical Project Manager</span>
+    <span class="meta-pill"><strong>Region:</strong> ap-south-1 (Mumbai)</span>
+    <span class="meta-pill"><strong>Target:</strong> 50M+ concurrent sessions</span>
+    <span class="meta-pill"><strong>Strategy:</strong> SIM first → then AWS</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar">
+  <span class="prog-label">PROGRESS</span>
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <span class="prog-pct" id="progPct">0%</span>
+  <div class="phase-dots" id="phaseDots"></div>
+</div>
+
+<div class="container">
+
+<!-- SUMMARY -->
+<div class="summary-grid">
+  <div class="sum-card"><div class="sum-num" style="color:var(--accent)">13</div><div class="sum-label">Phases</div></div>
+  <div class="sum-card"><div class="sum-num" style="color:var(--green)">22</div><div class="sum-label">AWS Services</div></div>
+  <div class="sum-card"><div class="sum-num" style="color:var(--amber)">$0–5</div><div class="sum-label">Cost Guard</div></div>
+  <div class="sum-card"><div class="sum-num" style="color:var(--purple)">76Tbps</div><div class="sum-label">Design Target</div></div>
+</div>
+
+<!-- ARCHITECTURE OVERVIEW -->
+<div class="phase-card" id="archCard">
+  <div class="phase-header" onclick="toggleCard('archCard')">
+    <div class="phase-num" style="background:rgba(79,142,247,0.12);color:var(--accent)">ARC</div>
+    <div class="phase-meta">
+      <div class="phase-title">Architecture Overview & Service Inventory</div>
+      <div class="phase-sub">Full stack · 5 patterns · simulation mapping</div>
+    </div>
+    <div class="phase-tags"><span class="tag tag-sim">REFERENCE</span></div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div style="padding:20px">
+      <div class="arch-flow">
+        <div class="arch-layer">
+          <span class="layer-label">Edge</span>
+          <div class="arch-box" style="border-color:rgba(79,142,247,0.4);color:var(--accent)">Route 53 — DNS Failover + Health Checks</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label"></span>
+          <div class="arch-box">Global Accelerator — Anycast Routing</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">CDN</span>
+          <div class="arch-box" style="border-color:rgba(47,207,200,0.3)">CloudFront Multi-CDN + WAF + Shield</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">Compute</span>
+          <div class="arch-box">ALB → EKS (Kubernetes) — On-Demand + Spot</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">AI</span>
+          <div class="arch-box" style="border-color:rgba(155,127,247,0.3)">SageMaker — AI Pre-Scale + Bitrate Prediction</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">Media</span>
+          <div class="arch-box" style="border-color:rgba(245,166,35,0.3)">MediaLive → MediaPackage — CMAF Pipeline</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">Storage</span>
+          <div class="arch-box">S3 — Segments + Static Fallback</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">Data</span>
+          <div class="arch-box">ElastiCache Redis · DynamoDB · Kinesis Streams</div>
+        </div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-layer">
+          <span class="layer-label">Ops</span>
+          <div class="arch-box">CloudWatch + X-Ray · CodePipeline · Secrets Manager</div>
+        </div>
+      </div>
+      <div class="svc-grid">
+        <div class="svc-card"><div class="svc-name">Route 53</div><div class="svc-desc">DNS failover, health checks</div><div class="svc-tier tag tag-cost">~$0.50/zone</div></div>
+        <div class="svc-card"><div class="svc-name">CloudFront</div><div class="svc-desc">Edge CDN, signed URLs</div><div class="svc-tier tag tag-free">1TB free</div></div>
+        <div class="svc-card"><div class="svc-name">WAF</div><div class="svc-desc">Bot protection, rate limit</div><div class="svc-tier tag tag-cost">$5/mo base</div></div>
+        <div class="svc-card"><div class="svc-name">Shield Std</div><div class="svc-desc">DDoS protection</div><div class="svc-tier tag tag-free">FREE</div></div>
+        <div class="svc-card"><div class="svc-name">ALB</div><div class="svc-desc">HTTP/2, path routing</div><div class="svc-tier tag tag-free">750hr free</div></div>
+        <div class="svc-card"><div class="svc-name">EKS</div><div class="svc-desc">Kubernetes control plane</div><div class="svc-tier tag tag-cost">$0.10/hr</div></div>
+        <div class="svc-card"><div class="svc-name">Lambda</div><div class="svc-desc">CDN routing, event handlers</div><div class="svc-tier tag tag-free">1M req free</div></div>
+        <div class="svc-card"><div class="svc-name">MediaLive</div><div class="svc-desc">CMAF HLS/DASH encoding</div><div class="svc-tier tag tag-cost">~$15/hr</div></div>
+        <div class="svc-card"><div class="svc-name">MediaPackage</div><div class="svc-desc">Origin + packaging</div><div class="svc-tier tag tag-cost">per GB</div></div>
+        <div class="svc-card"><div class="svc-name">S3</div><div class="svc-desc">Video segments, fallback</div><div class="svc-tier tag tag-free">5GB free</div></div>
+        <div class="svc-card"><div class="svc-name">ElastiCache</div><div class="svc-desc">Redis session cache</div><div class="svc-tier tag tag-cost">not free</div></div>
+        <div class="svc-card"><div class="svc-name">DynamoDB</div><div class="svc-desc">Sessions, metadata</div><div class="svc-tier tag tag-free">25GB free</div></div>
+        <div class="svc-card"><div class="svc-name">SageMaker</div><div class="svc-desc">Traffic prediction ML</div><div class="svc-tier tag tag-cost">trial only</div></div>
+        <div class="svc-card"><div class="svc-name">Kinesis</div><div class="svc-desc">Real-time viewer events</div><div class="svc-tier tag tag-free">1 shard free</div></div>
+        <div class="svc-card"><div class="svc-name">CloudWatch</div><div class="svc-desc">Metrics, alarms, dashboards</div><div class="svc-tier tag tag-free">10 metrics free</div></div>
+        <div class="svc-card"><div class="svc-name">X-Ray</div><div class="svc-desc">Distributed tracing</div><div class="svc-tier tag tag-free">100K traces</div></div>
+        <div class="svc-card"><div class="svc-name">ECR</div><div class="svc-desc">Docker image registry</div><div class="svc-tier tag tag-free">500MB free</div></div>
+        <div class="svc-card"><div class="svc-name">CodePipeline</div><div class="svc-desc">CI/CD automation</div><div class="svc-tier tag tag-free">1 pipeline free</div></div>
+        <div class="svc-card"><div class="svc-name">IAM</div><div class="svc-desc">Roles, policies, OIDC</div><div class="svc-tier tag tag-free">FREE</div></div>
+        <div class="svc-card"><div class="svc-name">VPC</div><div class="svc-desc">Network isolation</div><div class="svc-tier tag tag-cost">NAT ~$45/mo</div></div>
+        <div class="svc-card"><div class="svc-name">Secrets Mgr</div><div class="svc-desc">API keys, DB creds</div><div class="svc-tier tag tag-cost">$0.40/secret</div></div>
+        <div class="svc-card"><div class="svc-name">Global Accel</div><div class="svc-desc">Anycast routing</div><div class="svc-tier tag tag-cost">2mo trial</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 0 -->
+<div class="phase-card" id="phase0">
+  <div class="phase-header" onclick="toggleCard('phase0')">
+    <div class="phase-num" style="background:rgba(61,214,140,0.12);color:var(--green)">P0</div>
+    <div class="phase-meta">
+      <div class="phase-title">Pre-Project Setup — Account, Billing, Directory</div>
+      <div class="phase-sub">aws configure · budgets · project scaffold</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">FREE TIER</span>
+      <button class="mark-done-btn" id="btn-phase0" onclick="event.stopPropagation();markDone('phase0',0)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p0-sim')">⚙ Simulation (Local)</span>
+      <span class="tab" onclick="switchTab(this,'p0-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p0-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p0-sim">
+      <div class="objective"><div class="objective-label">Objective</div><p>Bootstrap project directory, install all tools locally, and confirm AWS CLI access before spending a single dollar.</p></div>
+      <div class="step"><div class="step-label">Step 0.1 — Install Prerequisites</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Install tools (macOS/Ubuntu)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># macOS</span>
+brew install awscli kubectl eksctl helm jq ffmpeg
+brew install --cask docker
+
+<span class="c"># Ubuntu/WSL</span>
+sudo apt-get update && sudo apt-get install -y awscli jq ffmpeg curl
+<span class="c"># Install kubectl</span>
+curl -LO <span class="s">"https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"</span>
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+<span class="c"># Verify all installs</span>
+aws --version && kubectl version --client && ffmpeg -version | head -1</pre></div></div>
+      <div class="step"><div class="step-label">Step 0.2 — Create Project Directory</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Scaffold project</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>mkdir -p jio-aws-capstone/{00-pre-setup,01-networking,02-iam,03-eks,\
+04-media,05-cdn,06-ai,07-data,08-observability,09-security,\
+10-simulation,11-cicd,12-cleanup}
+cd jio-aws-capstone
+
+cat > .env <span class="s">&lt;&lt; 'EOF'</span>
+<span class="v">export AWS_REGION</span>=<span class="s">"ap-south-1"</span>
+<span class="v">export PROJECT_NAME</span>=<span class="s">"jio-capstone"</span>
+<span class="v">export VPC_CIDR</span>=<span class="s">"10.0.0.0/16"</span>
+<span class="v">export EKS_CLUSTER_NAME</span>=<span class="s">"jio-streaming-cluster"</span>
+EOF
+
+source .env
+echo <span class="s">"✅ Project initialized in $(pwd)"</span></pre></div></div>
+    </div>
+    <div class="tab-body" id="p0-aws">
+      <div class="alert alert-warn"><span class="alert-icon">⚠</span><span>Set the $5 billing alarm FIRST — before running any other AWS command. This is non-negotiable as TPM.</span></div>
+      <div class="step"><div class="step-label">Step 0.A — Configure AWS CLI</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">aws configure</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>aws configure
+<span class="c"># AWS Access Key ID: [from IAM console]</span>
+<span class="c"># AWS Secret Access Key: [from IAM console]</span>
+<span class="c"># Default region name: ap-south-1</span>
+<span class="c"># Default output format: json</span>
+
+<span class="c"># Verify identity</span>
+aws sts get-caller-identity
+
+<span class="c"># Store account ID</span>
+<span class="v">export AWS_ACCOUNT_ID</span>=$(aws sts get-caller-identity --query Account --output text)
+<span class="v">export S3_BUCKET</span>=<span class="s">"jio-capstone-media-${AWS_ACCOUNT_ID}"</span>
+echo <span class="s">"Account: $AWS_ACCOUNT_ID"</span></pre></div></div>
+      <div class="step"><div class="step-label">Step 0.B — Create $5 Billing Alarm</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Billing alarm — MUST do first</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create SNS topic for billing notifications</span>
+aws sns create-topic \
+  --name jio-billing-alert \
+  --region us-east-1
+
+<span class="v">TOPIC_ARN</span>=$(aws sns list-topics --region us-east-1 \
+  --query <span class="s">"Topics[?contains(TopicArn,'jio-billing-alert')].TopicArn"</span> \
+  --output text)
+
+<span class="c"># Subscribe your email</span>
+aws sns subscribe \
+  --topic-arn <span class="s">"$TOPIC_ARN"</span> \
+  --protocol email \
+  --notification-endpoint <span class="s">"YOUR_EMAIL@example.com"</span> \
+  --region us-east-1
+
+<span class="c"># Create $5 CloudWatch billing alarm (us-east-1 only)</span>
+aws cloudwatch put-metric-alarm \
+  --alarm-name <span class="s">"jio-capstone-billing-5usd"</span> \
+  --alarm-description <span class="s">"ALERT: Spend exceeds $5"</span> \
+  --metric-name EstimatedCharges \
+  --namespace AWS/Billing \
+  --statistic Maximum \
+  --period 86400 \
+  --threshold 5.00 \
+  --comparison-operator GreaterThanOrEqualToThreshold \
+  --dimensions Name=Currency,Value=USD \
+  --evaluation-periods 1 \
+  --alarm-actions <span class="s">"$TOPIC_ARN"</span> \
+  --region us-east-1
+
+echo <span class="s">"✅ Billing alarm set at $5"</span></pre></div></div>
+    </div>
+    <div class="tab-body" id="p0-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>AWS Identity</td><td><code>aws sts get-caller-identity</code></td><td>Returns Account, UserId, Arn</td></tr>
+        <tr><td>Region set</td><td><code>aws configure get region</code></td><td>ap-south-1</td></tr>
+        <tr><td>Billing alarm</td><td><code>aws cloudwatch describe-alarms --alarm-names jio-capstone-billing-5usd --region us-east-1</code></td><td>AlarmState: OK</td></tr>
+        <tr><td>Dir structure</td><td><code>ls jio-aws-capstone/</code></td><td>13 phase dirs visible</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 1 -->
+<div class="phase-card" id="phase1">
+  <div class="phase-header" onclick="toggleCard('phase1')">
+    <div class="phase-num" style="background:rgba(79,142,247,0.12);color:var(--accent)">P1</div>
+    <div class="phase-meta">
+      <div class="phase-title">Networking Foundation — VPC, Subnets, Security Groups</div>
+      <div class="phase-sub">vpc · subnets · nat · route tables · security groups · nacls</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">VPC FREE</span>
+      <span class="tag tag-cost">NAT $$</span>
+      <button class="mark-done-btn" id="btn-phase1" onclick="event.stopPropagation();markDone('phase1',1)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p1-sim')">⚙ Simulation</span>
+      <span class="tab" onclick="switchTab(this,'p1-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p1-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p1-sim">
+      <div class="objective"><div class="objective-label">Objective</div><p>Simulate the network topology locally. Draw the VPC diagram and understand CIDR allocation before creating real resources.</p></div>
+      <div class="alert alert-info"><span class="alert-icon">ℹ</span><span><strong>SIM:</strong> Use AWS VPC Reachability Analyzer design mode or draw.io. Map out all 6 subnets (3 public + 3 private) on paper before creating them. This is a TPM discipline — design before build.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Network planning (local validation)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Plan your CIDR blocks (no AWS cost)</span>
+cat > 01-networking/network-plan.txt <span class="s">&lt;&lt; 'EOF'</span>
+VPC CIDR: 10.0.0.0/16
+
+Public Subnets (ALB, NAT Gateway):
+  pub-1a: 10.0.1.0/24 (ap-south-1a)
+  pub-1b: 10.0.2.0/24 (ap-south-1b)
+
+Private Subnets (EKS nodes, MediaLive):
+  prv-1a: 10.0.11.0/24 (ap-south-1a)
+  prv-1b: 10.0.12.0/24 (ap-south-1b)
+
+Data Subnets (DynamoDB, ElastiCache):
+  dat-1a: 10.0.21.0/24 (ap-south-1a)
+  dat-1b: 10.0.22.0/24 (ap-south-1b)
+EOF
+cat 01-networking/network-plan.txt</pre></div>
+    </div>
+    <div class="tab-body" id="p1-aws">
+      <div class="tpm-note"><div class="tpm-note-label">TPM NOTE</div><p>Skip NAT Gateway in the free tier run — use VPC Endpoints for S3 and DynamoDB instead. NAT Gateway costs $0.045/hr (~$33/mo).</p></div>
+      <div class="step"><div class="step-label">Step 1.1 — Create VPC</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">VPC creation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create VPC</span>
+<span class="v">VPC_ID</span>=$(aws ec2 create-vpc \
+  --cidr-block 10.0.0.0/16 \
+  --tag-specifications <span class="s">'ResourceType=vpc,Tags=[{Key=Name,Value=jio-capstone-vpc},{Key=Project,Value=jio-capstone}]'</span> \
+  --query <span class="s">'Vpc.VpcId'</span> --output text)
+echo <span class="s">"VPC: $VPC_ID"</span>
+
+<span class="c"># Enable DNS resolution</span>
+aws ec2 modify-vpc-attribute --vpc-id <span class="s">"$VPC_ID"</span> --enable-dns-hostnames
+aws ec2 modify-vpc-attribute --vpc-id <span class="s">"$VPC_ID"</span> --enable-dns-support
+
+<span class="c"># Create Internet Gateway</span>
+<span class="v">IGW_ID</span>=$(aws ec2 create-internet-gateway \
+  --tag-specifications <span class="s">'ResourceType=internet-gateway,Tags=[{Key=Name,Value=jio-igw}]'</span> \
+  --query <span class="s">'InternetGateway.InternetGatewayId'</span> --output text)
+aws ec2 attach-internet-gateway --internet-gateway-id <span class="s">"$IGW_ID"</span> --vpc-id <span class="s">"$VPC_ID"</span>
+echo <span class="s">"IGW: $IGW_ID attached"</span></pre></div></div>
+      <div class="step"><div class="step-label">Step 1.2 — Create All 6 Subnets</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Subnet creation (6 subnets across 2 AZs)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Public subnets</span>
+<span class="v">PUB1A</span>=$(aws ec2 create-subnet --vpc-id <span class="s">"$VPC_ID"</span> \
+  --cidr-block 10.0.1.0/24 --availability-zone ap-south-1a \
+  --tag-specifications <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=jio-pub-1a},{Key=Type,Value=public}]'</span> \
+  --query <span class="s">'Subnet.SubnetId'</span> --output text)
+
+<span class="v">PUB1B</span>=$(aws ec2 create-subnet --vpc-id <span class="s">"$VPC_ID"</span> \
+  --cidr-block 10.0.2.0/24 --availability-zone ap-south-1b \
+  --tag-specifications <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=jio-pub-1b},{Key=Type,Value=public}]'</span> \
+  --query <span class="s">'Subnet.SubnetId'</span> --output text)
+
+<span class="c"># Private subnets (EKS nodes)</span>
+<span class="v">PRV1A</span>=$(aws ec2 create-subnet --vpc-id <span class="s">"$VPC_ID"</span> \
+  --cidr-block 10.0.11.0/24 --availability-zone ap-south-1a \
+  --tag-specifications <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=jio-prv-1a},{Key=Type,Value=private},{Key=kubernetes.io/role/internal-elb,Value=1}]'</span> \
+  --query <span class="s">'Subnet.SubnetId'</span> --output text)
+
+<span class="v">PRV1B</span>=$(aws ec2 create-subnet --vpc-id <span class="s">"$VPC_ID"</span> \
+  --cidr-block 10.0.12.0/24 --availability-zone ap-south-1b \
+  --tag-specifications <span class="s">'ResourceType=subnet,Tags=[{Key=Name,Value=jio-prv-1b},{Key=Type,Value=private},{Key=kubernetes.io/role/internal-elb,Value=1}]'</span> \
+  --query <span class="s">'Subnet.SubnetId'</span> --output text)
+
+echo <span class="s">"Subnets: $PUB1A $PUB1B $PRV1A $PRV1B"</span>
+
+<span class="c"># Enable auto-assign public IP on public subnets</span>
+aws ec2 modify-subnet-attribute --subnet-id <span class="s">"$PUB1A"</span> --map-public-ip-on-launch
+aws ec2 modify-subnet-attribute --subnet-id <span class="s">"$PUB1B"</span> --map-public-ip-on-launch</pre></div></div>
+      <div class="step"><div class="step-label">Step 1.3 — Route Tables + Security Groups</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Routing and security</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Public route table → IGW</span>
+<span class="v">PUB_RT</span>=$(aws ec2 create-route-table --vpc-id <span class="s">"$VPC_ID"</span> \
+  --tag-specifications <span class="s">'ResourceType=route-table,Tags=[{Key=Name,Value=jio-pub-rt}]'</span> \
+  --query <span class="s">'RouteTable.RouteTableId'</span> --output text)
+aws ec2 create-route --route-table-id <span class="s">"$PUB_RT"</span> --destination-cidr-block 0.0.0.0/0 --gateway-id <span class="s">"$IGW_ID"</span>
+aws ec2 associate-route-table --route-table-id <span class="s">"$PUB_RT"</span> --subnet-id <span class="s">"$PUB1A"</span>
+aws ec2 associate-route-table --route-table-id <span class="s">"$PUB_RT"</span> --subnet-id <span class="s">"$PUB1B"</span>
+
+<span class="c"># ALB Security Group</span>
+<span class="v">ALB_SG</span>=$(aws ec2 create-security-group \
+  --group-name jio-alb-sg --description <span class="s">"ALB Security Group"</span> --vpc-id <span class="s">"$VPC_ID"</span> \
+  --tag-specifications <span class="s">'ResourceType=security-group,Tags=[{Key=Name,Value=jio-alb-sg}]'</span> \
+  --query <span class="s">'GroupId'</span> --output text)
+aws ec2 authorize-security-group-ingress --group-id <span class="s">"$ALB_SG"</span> --protocol tcp --port 443 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id <span class="s">"$ALB_SG"</span> --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+<span class="c"># EKS nodes Security Group</span>
+<span class="v">EKS_SG</span>=$(aws ec2 create-security-group \
+  --group-name jio-eks-sg --description <span class="s">"EKS Node Security Group"</span> --vpc-id <span class="s">"$VPC_ID"</span> \
+  --tag-specifications <span class="s">'ResourceType=security-group,Tags=[{Key=Name,Value=jio-eks-sg}]'</span> \
+  --query <span class="s">'GroupId'</span> --output text)
+<span class="c"># Allow traffic from ALB</span>
+aws ec2 authorize-security-group-ingress --group-id <span class="s">"$EKS_SG"</span> \
+  --protocol tcp --port 0-65535 --source-group <span class="s">"$ALB_SG"</span>
+
+<span class="c"># Save IDs for later phases</span>
+cat > 01-networking/ids.env <span class="s">&lt;&lt; EOF</span>
+VPC_ID=<span class="v">$VPC_ID</span>
+PUB1A=<span class="v">$PUB1A</span>
+PUB1B=<span class="v">$PUB1B</span>
+PRV1A=<span class="v">$PRV1A</span>
+PRV1B=<span class="v">$PRV1B</span>
+ALB_SG=<span class="v">$ALB_SG</span>
+EKS_SG=<span class="v">$EKS_SG</span>
+EOF</pre></div></div>
+    </div>
+    <div class="tab-body" id="p1-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>VPC exists</td><td><code>aws ec2 describe-vpcs --filters Name=tag:Name,Values=jio-capstone-vpc</code></td><td>State: available</td></tr>
+        <tr><td>Subnets</td><td><code>aws ec2 describe-subnets --filters Name=vpc-id,Values=$VPC_ID --query 'length(Subnets)'</code></td><td>4 (or 6)</td></tr>
+        <tr><td>IGW attached</td><td><code>aws ec2 describe-internet-gateways --filters Name=attachment.vpc-id,Values=$VPC_ID</code></td><td>State: attached</td></tr>
+        <tr><td>SG rules</td><td><code>aws ec2 describe-security-groups --group-ids $ALB_SG</code></td><td>Port 80/443 inbound</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase-card" id="phase2">
+  <div class="phase-header" onclick="toggleCard('phase2')">
+    <div class="phase-num" style="background:rgba(155,127,247,0.12);color:var(--purple)">P2</div>
+    <div class="phase-meta">
+      <div class="phase-title">IAM Roles & Policies — Least Privilege Architecture</div>
+      <div class="phase-sub">iam roles · oidc · eks service accounts · policies</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">ALWAYS FREE</span>
+      <button class="mark-done-btn" id="btn-phase2" onclick="event.stopPropagation();markDone('phase2',2)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p2-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p2-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p2-aws">
+      <div class="tpm-note"><div class="tpm-note-label">TPM NOTE — IAM Philosophy</div>
+        <ul><li>Never use AdministratorAccess on service roles</li><li>One role per service (EKS cluster role ≠ node role ≠ app role)</li><li>Use OIDC for pod-level AWS permissions (no keys in pods)</li><li>Tag every role with Project=jio-capstone for cost attribution</li></ul>
+      </div>
+      <div class="step"><div class="step-label">Step 2.1 — EKS Cluster Role</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">EKS IAM roles</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># EKS Cluster Service Role</span>
+aws iam create-role \
+  --role-name jio-eks-cluster-role \
+  --assume-role-policy-document <span class="s">'{
+    "Version":"2012-10-17",
+    "Statement":[{"Effect":"Allow","Principal":{"Service":"eks.amazonaws.com"},
+    "Action":"sts:AssumeRole"}]}'</span>
+aws iam attach-role-policy \
+  --role-name jio-eks-cluster-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+<span class="c"># EKS Node Group Role</span>
+aws iam create-role \
+  --role-name jio-eks-node-role \
+  --assume-role-policy-document <span class="s">'{
+    "Version":"2012-10-17",
+    "Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},
+    "Action":"sts:AssumeRole"}]}'</span>
+aws iam attach-role-policy --role-name jio-eks-node-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+aws iam attach-role-policy --role-name jio-eks-node-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+aws iam attach-role-policy --role-name jio-eks-node-role \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly</pre></div></div>
+      <div class="step"><div class="step-label">Step 2.2 — Application-Specific Roles</div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">App roles with least-privilege</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Streaming app role — read S3 + write DynamoDB + put Kinesis</span>
+cat > 02-iam/streaming-app-policy.json <span class="s">&lt;&lt; 'EOF'</span>
+{
+  <span class="s">"Version"</span>: <span class="s">"2012-10-17"</span>,
+  <span class="s">"Statement"</span>: [
+    {<span class="s">"Effect"</span>:<span class="s">"Allow"</span>,<span class="s">"Action"</span>:[<span class="s">"s3:GetObject"</span>,<span class="s">"s3:PutObject"</span>],
+     <span class="s">"Resource"</span>:<span class="s">"arn:aws:s3:::jio-capstone-media-*/*"</span>},
+    {<span class="s">"Effect"</span>:<span class="s">"Allow"</span>,<span class="s">"Action"</span>:[<span class="s">"dynamodb:PutItem"</span>,<span class="s">"dynamodb:GetItem"</span>,<span class="s">"dynamodb:UpdateItem"</span>],
+     <span class="s">"Resource"</span>:<span class="s">"arn:aws:dynamodb:ap-south-1:*:table/jio-capstone-*"</span>},
+    {<span class="s">"Effect"</span>:<span class="s">"Allow"</span>,<span class="s">"Action"</span>:[<span class="s">"kinesis:PutRecord"</span>,<span class="s">"kinesis:PutRecords"</span>],
+     <span class="s">"Resource"</span>:<span class="s">"arn:aws:kinesis:ap-south-1:*:stream/jio-capstone-*"</span>}
+  ]
+}
+EOF
+aws iam create-policy --policy-name jio-streaming-app-policy \
+  --policy-document file://02-iam/streaming-app-policy.json
+
+echo <span class="s">"✅ IAM roles created"</span>
+aws iam list-roles --query <span class="s">"Roles[?starts_with(RoleName,'jio')].RoleName"</span> --output table</pre></div></div>
+    </div>
+    <div class="tab-body" id="p2-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>Cluster role</td><td><code>aws iam get-role --role-name jio-eks-cluster-role</code></td><td>Role ARN returned</td></tr>
+        <tr><td>Node role</td><td><code>aws iam get-role --role-name jio-eks-node-role</code></td><td>Role ARN returned</td></tr>
+        <tr><td>Policies attached</td><td><code>aws iam list-attached-role-policies --role-name jio-eks-node-role</code></td><td>3 policies listed</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase-card" id="phase3">
+  <div class="phase-header" onclick="toggleCard('phase3')">
+    <div class="phase-num" style="background:rgba(47,207,200,0.12);color:var(--teal)">P3</div>
+    <div class="phase-meta">
+      <div class="phase-title">EKS Kubernetes Cluster — Container Orchestration</div>
+      <div class="phase-sub">minikube sim · eksctl · node groups · hpa · pod autoscaler</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-sim">SIM: Minikube</span>
+      <span class="tag tag-cost">AWS: $0.10/hr</span>
+      <button class="mark-done-btn" id="btn-phase3" onclick="event.stopPropagation();markDone('phase3',3)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p3-sim')">⚙ Simulation (Minikube)</span>
+      <span class="tab" onclick="switchTab(this,'p3-aws')">☁ AWS EKS (Real)</span>
+      <span class="tab" onclick="switchTab(this,'p3-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p3-sim">
+      <div class="alert alert-success"><span class="alert-icon">✓</span><span><strong>Practice here first.</strong> Minikube gives you a 3-node Kubernetes cluster locally. Master all kubectl commands before paying for EKS.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[SIM] Minikube 3-node cluster</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Start 3-node Minikube cluster (simulates EKS)</span>
+minikube start --nodes 3 --driver=docker \
+  --cpus=2 --memory=2048 \
+  --kubernetes-version=v1.29.0 \
+  --profile jio-capstone
+
+<span class="c"># Verify nodes</span>
+kubectl get nodes -o wide
+
+<span class="c"># Label nodes (simulates On-Demand + Spot)</span>
+kubectl label node jio-capstone node-type=on-demand
+kubectl label node jio-capstone-m02 node-type=spot
+kubectl label node jio-capstone-m03 node-type=spot
+
+<span class="c"># Deploy streaming origin (3 replicas)</span>
+cat > 03-eks/streaming-deploy.yaml <span class="s">&lt;&lt; 'EOF'</span>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-origin
+  labels:
+    app: streaming-origin
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: streaming-origin
+  template:
+    metadata:
+      labels:
+        app: streaming-origin
+    spec:
+      containers:
+      - name: origin
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streaming-origin-svc
+spec:
+  selector:
+    app: streaming-origin
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+EOF
+kubectl apply -f 03-eks/streaming-deploy.yaml
+kubectl get pods,svc
+
+<span class="c"># HPA — auto-scale on CPU >50%</span>
+kubectl autoscale deployment streaming-origin \
+  --cpu-percent=50 --min=3 --max=20
+kubectl get hpa</pre></div>
+    </div>
+    <div class="tab-body" id="p3-aws">
+      <div class="alert alert-warn"><span class="alert-icon">⚠</span><span>EKS control plane costs $0.10/hr ($72/mo). Create it for 1-2 hrs for the demo then delete. Use the cleanup script in Phase 12.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[AWS] Real EKS cluster via eksctl</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Load networking IDs</span>
+source 01-networking/ids.env
+
+<span class="c"># Create EKS cluster (eksctl creates cluster + managed node groups)</span>
+cat > 03-eks/cluster.yaml <span class="s">&lt;&lt; EOF</span>
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: jio-streaming-cluster
+  region: ap-south-1
+  version: <span class="s">"1.29"</span>
+vpc:
+  id: <span class="v">${VPC_ID}</span>
+  subnets:
+    private:
+      ap-south-1a: {id: <span class="v">${PRV1A}</span>}
+      ap-south-1b: {id: <span class="v">${PRV1B}</span>}
+    public:
+      ap-south-1a: {id: <span class="v">${PUB1A}</span>}
+      ap-south-1b: {id: <span class="v">${PUB1B}</span>}
+managedNodeGroups:
+- name: on-demand-ng
+  instanceType: t3.medium
+  minSize: 1
+  maxSize: 3
+  desiredCapacity: 1
+  labels: {node-type: on-demand}
+  tags:
+    Project: jio-capstone
+- name: spot-ng
+  instanceType: t3.medium
+  spot: true
+  minSize: 0
+  maxSize: 5
+  desiredCapacity: 2
+  labels: {node-type: spot}
+EOF
+
+eksctl create cluster -f 03-eks/cluster.yaml
+<span class="c"># Takes ~15 mins</span>
+
+<span class="c"># Update kubeconfig</span>
+aws eks update-kubeconfig \
+  --region ap-south-1 \
+  --name jio-streaming-cluster
+
+<span class="c"># Install metrics server (needed for HPA)</span>
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+kubectl get nodes -o wide</pre></div>
+    </div>
+    <div class="tab-body" id="p3-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>Nodes ready</td><td><code>kubectl get nodes</code></td><td>3 nodes, STATUS=Ready</td></tr>
+        <tr><td>Pods running</td><td><code>kubectl get pods</code></td><td>streaming-origin-* Running</td></tr>
+        <tr><td>HPA active</td><td><code>kubectl get hpa</code></td><td>streaming-origin 0%/50%</td></tr>
+        <tr><td>Service exposed</td><td><code>kubectl get svc streaming-origin-svc</code></td><td>EXTERNAL-IP assigned</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 4 -->
+<div class="phase-card" id="phase4">
+  <div class="phase-header" onclick="toggleCard('phase4')">
+    <div class="phase-num" style="background:rgba(245,166,35,0.12);color:var(--amber)">P4</div>
+    <div class="phase-meta">
+      <div class="phase-title">Media Pipeline — CMAF Encoding + Packaging</div>
+      <div class="phase-sub">ffmpeg sim · medialive · mediapackage · s3 segments · cmaf hls</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-sim">SIM: FFmpeg</span>
+      <span class="tag tag-cost">AWS: ~$15/hr</span>
+      <button class="mark-done-btn" id="btn-phase4" onclick="event.stopPropagation();markDone('phase4',4)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p4-sim')">⚙ Simulation (FFmpeg)</span>
+      <span class="tab" onclick="switchTab(this,'p4-aws')">☁ AWS MediaLive/Package</span>
+      <span class="tab" onclick="switchTab(this,'p4-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p4-sim">
+      <div class="alert alert-success"><span class="alert-icon">✓</span><span><strong>This produces a real playable CMAF stream in VLC.</strong> FFmpeg perfectly simulates MediaLive output. Use this indefinitely — MediaLive costs ~$15/hr.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[SIM] CMAF 4-bitrate stream via FFmpeg</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>mkdir -p 04-media/{input,output/{1080p,720p,480p,360p}}
+
+<span class="c"># Generate a test input (sine wave + color bars)</span>
+ffmpeg -y -f lavfi -i testsrc2=size=1920x1080:rate=30 \
+  -f lavfi -i sine=frequency=1000:sample_rate=48000 \
+  -t 300 04-media/input/test-stream.mp4
+
+<span class="c"># Transcode to 4 CMAF bitrate ladders (simulates MediaLive)</span>
+ffmpeg -y -i 04-media/input/test-stream.mp4 \
+  -map 0:v -map 0:a -c:v libx264 -b:v 4500k -maxrate 4500k -bufsize 9000k \
+    -vf scale=1920:1080 -c:a aac -b:a 192k -f hls \
+    -hls_time 2 -hls_list_size 10 -hls_flags delete_segments+independent_segments \
+    -hls_segment_type fmp4 -hls_fmp4_init_filename init.mp4 \
+    04-media/output/1080p/stream.m3u8 \
+  -map 0:v -map 0:a -c:v libx264 -b:v 2500k -maxrate 2500k -bufsize 5000k \
+    -vf scale=1280:720 -c:a aac -b:a 128k -f hls \
+    -hls_time 2 -hls_list_size 10 -hls_flags delete_segments+independent_segments \
+    -hls_segment_type fmp4 -hls_fmp4_init_filename init.mp4 \
+    04-media/output/720p/stream.m3u8 \
+  -map 0:v -map 0:a -c:v libx264 -b:v 1200k -maxrate 1200k -bufsize 2400k \
+    -vf scale=854:480 -c:a aac -b:a 128k -f hls \
+    -hls_time 2 -hls_list_size 10 -hls_flags delete_segments+independent_segments \
+    -hls_segment_type fmp4 -hls_fmp4_init_filename init.mp4 \
+    04-media/output/480p/stream.m3u8 \
+  -map 0:v -map 0:a -c:v libx264 -b:v 600k -maxrate 600k -bufsize 1200k \
+    -vf scale=640:360 -c:a aac -b:a 96k -f hls \
+    -hls_time 2 -hls_list_size 10 -hls_flags delete_segments+independent_segments \
+    -hls_segment_type fmp4 -hls_fmp4_init_filename init.mp4 \
+    04-media/output/360p/stream.m3u8
+
+<span class="c"># Create master playlist (simulates MediaPackage output)</span>
+cat > 04-media/output/master.m3u8 <span class="s">&lt;&lt; 'EOF'</span>
+#EXTM3U
+#EXT-X-VERSION:6
+#EXT-X-STREAM-INF:BANDWIDTH=4500000,RESOLUTION=1920x1080,CODECS="avc1.640028,mp4a.40.2"
+1080p/stream.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=2500000,RESOLUTION=1280x720,CODECS="avc1.4d401f,mp4a.40.2"
+720p/stream.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=1200000,RESOLUTION=854x480,CODECS="avc1.4d401e,mp4a.40.2"
+480p/stream.m3u8
+#EXT-X-STREAM-INF:BANDWIDTH=600000,RESOLUTION=640x360,CODECS="avc1.4d401e,mp4a.40.2"
+360p/stream.m3u8
+EOF
+
+echo <span class="s">"✅ CMAF stream ready. Open in VLC:"</span>
+echo <span class="s">"   vlc 04-media/output/master.m3u8"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p4-aws">
+      <div class="alert alert-danger"><span class="alert-icon">🚨</span><span>MediaLive costs ~$15/hr per channel. Run for demo only. Always delete after testing (Phase 12 handles this).</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[AWS] MediaPackage channel + S3 segments</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create S3 bucket for media segments</span>
+aws s3 mb s3://<span class="v">${S3_BUCKET}</span> --region ap-south-1
+aws s3api put-bucket-versioning \
+  --bucket <span class="v">${S3_BUCKET}</span> \
+  --versioning-configuration Status=Enabled
+
+<span class="c"># Upload SIM output to S3 (test without MediaLive)</span>
+aws s3 sync 04-media/output/ s3://<span class="v">${S3_BUCKET}</span>/live/ \
+  --content-type <span class="s">"application/x-mpegURL"</span> \
+  --exclude <span class="s">"*.mp4"</span>
+aws s3 sync 04-media/output/ s3://<span class="v">${S3_BUCKET}</span>/live/ \
+  --content-type <span class="s">"video/mp4"</span> \
+  --exclude <span class="s">"*.m3u8"</span>
+
+<span class="c"># Create MediaPackage channel (packaging only, no MediaLive)</span>
+aws mediapackage create-channel \
+  --id jio-capstone-channel \
+  --description <span class="s">"Jio Capstone Live Channel"</span>
+
+<span class="v">CHANNEL_ID</span>=<span class="s">"jio-capstone-channel"</span>
+
+<span class="c"># Create HLS endpoint</span>
+aws mediapackage create-origin-endpoint \
+  --channel-id <span class="v">${CHANNEL_ID}</span> \
+  --id jio-hls-endpoint \
+  --hls-package <span class="s">'{
+    "SegmentDurationSeconds":2,
+    "PlaylistWindowSeconds":60,
+    "PlaylistType":"EVENT",
+    "IncludeIframeOnlyStream":false
+  }'</span>
+
+echo <span class="s">"✅ MediaPackage endpoint created"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p4-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command/Action</th><th>Expected</th></tr>
+        <tr><td>Stream plays</td><td>vlc 04-media/output/master.m3u8</td><td>Video plays at 4 qualities</td></tr>
+        <tr><td>Segments exist</td><td><code>ls 04-media/output/1080p/ | wc -l</code></td><td>>5 .m4s segment files</td></tr>
+        <tr><td>S3 upload</td><td><code>aws s3 ls s3://$S3_BUCKET/live/</code></td><td>master.m3u8 + segments</td></tr>
+        <tr><td>fMP4 format</td><td><code>file 04-media/output/1080p/*.mp4</code></td><td>ISO Media MPEG v4</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 5 -->
+<div class="phase-card" id="phase5">
+  <div class="phase-header" onclick="toggleCard('phase5')">
+    <div class="phase-num" style="background:rgba(47,207,200,0.12);color:var(--teal)">P5</div>
+    <div class="phase-meta">
+      <div class="phase-title">CDN & Traffic Routing — CloudFront + Route 53</div>
+      <div class="phase-sub">cloudfront · oai · lambda@edge · route53 · health checks · signed urls</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">1TB Free CDN</span>
+      <button class="mark-done-btn" id="btn-phase5" onclick="event.stopPropagation();markDone('phase5',5)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p5-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p5-edge')">λ Lambda@Edge</span>
+      <span class="tab" onclick="switchTab(this,'p5-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p5-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">CloudFront distribution for S3 origin</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create Origin Access Identity (OAI) — restricts S3 to CloudFront only</span>
+<span class="v">OAI</span>=$(aws cloudfront create-cloud-front-origin-access-identity \
+  --cloud-front-origin-access-identity-config \
+    CallerReference=jio-oai-$(date +%s),Comment="Jio Capstone OAI" \
+  --query <span class="s">'CloudFrontOriginAccessIdentity.Id'</span> --output text)
+echo <span class="s">"OAI: $OAI"</span>
+
+<span class="c"># Update S3 bucket policy — only allow CloudFront OAI</span>
+cat > 05-cdn/s3-bucket-policy.json <span class="s">&lt;&lt; EOF</span>
+{
+  <span class="s">"Version"</span>:<span class="s">"2012-10-17"</span>,
+  <span class="s">"Statement"</span>:[{
+    <span class="s">"Effect"</span>:<span class="s">"Allow"</span>,
+    <span class="s">"Principal"</span>:{<span class="s">"CanonicalUser"</span>:<span class="s">"$(aws cloudfront list-cloud-front-origin-access-identities \
+      --query "CloudFrontOriginAccessIdentityList.Items[?Id=='$OAI'].S3CanonicalUserId" \
+      --output text)"</span>},
+    <span class="s">"Action"</span>:<span class="s">"s3:GetObject"</span>,
+    <span class="s">"Resource"</span>:<span class="s">"arn:aws:s3:::${S3_BUCKET}/*"</span>
+  }]
+}
+EOF
+aws s3api put-bucket-policy --bucket <span class="v">${S3_BUCKET}</span> \
+  --policy file://05-cdn/s3-bucket-policy.json
+
+<span class="c"># Create CloudFront distribution</span>
+<span class="v">CF_DIST</span>=$(aws cloudfront create-distribution \
+  --distribution-config <span class="s">'{
+    "CallerReference":"jio-cf-'$(date +%s)'",
+    "Comment":"Jio Capstone CDN",
+    "DefaultCacheBehavior":{
+      "TargetOriginId":"jio-s3-origin",
+      "ViewerProtocolPolicy":"redirect-to-https",
+      "CachePolicyId":"658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "AllowedMethods":{"Quantity":2,"Items":["GET","HEAD"],"CachedMethods":{"Quantity":2,"Items":["GET","HEAD"]}},
+      "Compress":true
+    },
+    "Origins":{
+      "Quantity":1,"Items":[{
+        "Id":"jio-s3-origin",
+        "DomainName":"'${S3_BUCKET}'.s3.ap-south-1.amazonaws.com",
+        "S3OriginConfig":{"OriginAccessIdentity":"origin-access-identity/cloudfront/'${OAI}'"}
+      }]
+    },
+    "Enabled":true,
+    "PriceClass":"PriceClass_200",
+    "HttpVersion":"http2and3"
+  }'</span> \
+  --query <span class="s">'Distribution.DomainName'</span> --output text)
+echo <span class="s">"CloudFront domain: $CF_DIST"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p5-edge">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">JS</span><span class="code-title">Lambda@Edge — multi-CDN routing + graceful degradation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c">// Lambda@Edge: Origin Request handler</span>
+<span class="c">// Routes video → high-perf CDN, fallback on 5xx</span>
+<span class="f">exports</span>.handler = <span class="k">async</span> (event) => {
+  <span class="k">const</span> request = event.Records[<span class="v">0</span>].cf.request;
+  <span class="k">const</span> uri = request.uri;
+
+  <span class="c">// Route scores/promos to cost-efficient origin</span>
+  <span class="k">if</span> (uri.includes(<span class="s">'/scores/'</span>) || uri.includes(<span class="s">'/promos/'</span>)) {
+    request.origin.s3.path = <span class="s">'/static-fallback'</span>;
+    <span class="k">return</span> request;
+  }
+
+  <span class="c">// Graceful degradation: if origin returns 5xx, serve cached static</span>
+  <span class="k">if</span> (event.Records[<span class="v">0</span>].cf.response?.status?.startsWith(<span class="s">'5'</span>)) {
+    <span class="k">return</span> {
+      status: <span class="s">'200'</span>,
+      headers: { <span class="s">'content-type'</span>: [{value: <span class="s">'image/png'</span>}] },
+      body: <span class="s">'&lt;!-- serve scoreboard static asset --&gt;'</span>,
+      bodyEncoding: <span class="s">'text'</span>
+    };
+  }
+  <span class="k">return</span> request;
+};</pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Deploy Lambda@Edge</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Package Lambda (must be in us-east-1 for Lambda@Edge)</span>
+zip 05-cdn/edge-router.zip 05-cdn/edge-router.js
+
+aws lambda create-function \
+  --function-name jio-edge-router \
+  --runtime nodejs20.x \
+  --role arn:aws:iam::<span class="v">${AWS_ACCOUNT_ID}</span>:role/jio-lambda-edge-role \
+  --handler edge-router.handler \
+  --zip-file fileb://05-cdn/edge-router.zip \
+  --region us-east-1 \
+  --publish
+
+<span class="c"># Get published version ARN (Lambda@Edge requires versioned ARN)</span>
+<span class="v">LAMBDA_ARN</span>=$(aws lambda list-versions-by-function \
+  --function-name jio-edge-router --region us-east-1 \
+  --query <span class="s">"Versions[-1].FunctionArn"</span> --output text)
+echo <span class="s">"Lambda@Edge ARN: $LAMBDA_ARN"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p5-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>CF distributes</td><td><code>curl -I https://$CF_DIST/live/master.m3u8</code></td><td>HTTP/2 200 x-cache: Hit</td></tr>
+        <tr><td>HTTPS redirect</td><td><code>curl -I http://$CF_DIST/live/</code></td><td>301 → https</td></tr>
+        <tr><td>S3 blocked direct</td><td><code>curl https://$S3_BUCKET.s3.amazonaws.com/live/master.m3u8</code></td><td>403 AccessDenied</td></tr>
+        <tr><td>Cache headers</td><td><code>curl -sI https://$CF_DIST/live/master.m3u8 | grep x-cache</code></td><td>Hit from cloudfront</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 6 -->
+<div class="phase-card" id="phase6">
+  <div class="phase-header" onclick="toggleCard('phase6')">
+    <div class="phase-num" style="background:rgba(155,127,247,0.12);color:var(--purple)">P6</div>
+    <div class="phase-meta">
+      <div class="phase-title">AI / ML Layer — SageMaker Traffic Prediction</div>
+      <div class="phase-sub">python sim · sagemaker endpoint · pre-scale trigger · ssm params</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-sim">SIM: Python</span>
+      <span class="tag tag-cost">AWS: Trial only</span>
+      <button class="mark-done-btn" id="btn-phase6" onclick="event.stopPropagation();markDone('phase6',6)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p6-sim')">⚙ Simulation (Python)</span>
+      <span class="tab" onclick="switchTab(this,'p6-aws')">☁ SageMaker</span>
+      <span class="tab" onclick="switchTab(this,'p6-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p6-sim">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">PYTHON</span><span class="code-title">[SIM] Traffic prediction model (scikit-learn)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># 06-ai/traffic_predictor.py</span>
+<span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> GradientBoostingRegressor
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+<span class="k">import</span> json, boto3, os
+
+<span class="c"># Synthetic IPL match viewer data</span>
+np.random.seed(<span class="v">42</span>)
+n = <span class="v">1000</span>
+X = np.column_stack([
+    np.random.choice([<span class="v">1</span>,<span class="v">2</span>,<span class="v">3</span>,<span class="v">4</span>,<span class="v">5</span>,<span class="v">6</span>,<span class="v">7</span>], n),    <span class="c"># day of week</span>
+    np.random.randint(<span class="v">0</span>, <span class="v">24</span>, n),                  <span class="c"># match start hour</span>
+    np.random.choice([<span class="v">1</span>,<span class="v">0</span>], n, p=[<span class="v">0.6</span>,<span class="v">0.4</span>]),     <span class="c"># is_weekend</span>
+    np.random.choice([<span class="v">1</span>,<span class="v">0</span>], n, p=[<span class="v">0.3</span>,<span class="v">0.7</span>]),     <span class="c"># is_final</span>
+    np.random.normal(<span class="v">25</span>, <span class="v">5</span>, n)                     <span class="c"># historical_avg_M_viewers</span>
+])
+y = X[:,<span class="v">4</span>] * (<span class="v">1.2</span> + <span class="v">0.5</span>*X[:,<span class="v">2</span>] + <span class="v">1.8</span>*X[:,<span class="v">3</span>]) + np.random.normal(<span class="v">0</span>,<span class="v">2</span>,n)
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+model = GradientBoostingRegressor(n_estimators=<span class="v">100</span>, learning_rate=<span class="v">0.1</span>)
+model.fit(X_scaled, y)
+
+<span class="c"># Predict: IPL Final, Sunday 7PM, 30M historical avg</span>
+test_event = np.array([[<span class="v">7</span>, <span class="v">19</span>, <span class="v">1</span>, <span class="v">1</span>, <span class="v">30</span>]])
+predicted_m = model.predict(scaler.transform(test_event))[<span class="v">0</span>]
+replicas_needed = <span class="f">max</span>(<span class="v">3</span>, <span class="f">int</span>(predicted_m / <span class="v">2.5</span>))
+
+<span class="f">print</span>(<span class="f">f</span><span class="s">"Predicted viewers: {predicted_m:.1f}M"</span>)
+<span class="f">print</span>(<span class="f">f</span><span class="s">"Recommended replicas: {replicas_needed}"</span>)
+
+<span class="c"># Write to SSM (triggers EKS pre-scale)</span>
+ssm = boto3.client(<span class="s">'ssm'</span>, region_name=<span class="s">'ap-south-1'</span>)
+ssm.put_parameter(
+    Name=<span class="s">'/jio-capstone/predicted-replicas'</span>,
+    Value=<span class="f">str</span>(replicas_needed),
+    Type=<span class="s">'String'</span>,
+    Overwrite=<span class="v">True</span>
+)
+<span class="f">print</span>(<span class="s">"✅ SSM updated → EKS will pre-scale"</span>)</pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Run simulation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>pip install scikit-learn boto3 numpy
+python 06-ai/traffic_predictor.py
+<span class="c"># Expected: Predicted viewers: ~65.2M, Recommended replicas: 26</span>
+aws ssm get-parameter --name /jio-capstone/predicted-replicas</pre></div>
+    </div>
+    <div class="tab-body" id="p6-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[AWS] SageMaker endpoint deployment</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Upload model to S3</span>
+cd 06-ai && tar -czf model.tar.gz traffic_predictor.py && cd ..
+aws s3 cp 06-ai/model.tar.gz s3://<span class="v">${S3_BUCKET}</span>/models/traffic-predictor/model.tar.gz
+
+<span class="c"># Create SageMaker model</span>
+aws sagemaker create-model \
+  --model-name jio-traffic-predictor \
+  --primary-container <span class="s">'{
+    "Image":"683313688378.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-scikit-learn:1.2-1-cpu-py3",
+    "ModelDataUrl":"s3://'${S3_BUCKET}'/models/traffic-predictor/model.tar.gz",
+    "Environment":{"SAGEMAKER_PROGRAM":"traffic_predictor.py"}
+  }'</span> \
+  --execution-role-arn arn:aws:iam::<span class="v">${AWS_ACCOUNT_ID}</span>:role/jio-sagemaker-role \
+  --region ap-south-1
+
+<span class="c"># Create endpoint config (ml.t2.medium is cheapest)</span>
+aws sagemaker create-endpoint-config \
+  --endpoint-config-name jio-predictor-config \
+  --production-variants <span class="s">'[{"VariantName":"AllTraffic","ModelName":"jio-traffic-predictor","InitialInstanceCount":1,"InstanceType":"ml.t2.medium"}]'</span>
+
+<span class="c"># Deploy endpoint</span>
+aws sagemaker create-endpoint \
+  --endpoint-name jio-traffic-predictor-endpoint \
+  --endpoint-config-name jio-predictor-config
+
+<span class="c"># Invoke endpoint</span>
+aws sagemaker-runtime invoke-endpoint \
+  --endpoint-name jio-traffic-predictor-endpoint \
+  --content-type <span class="s">'application/json'</span> \
+  --body <span class="s">'{"day_of_week":7,"hour":19,"is_weekend":1,"is_final":1,"historical_avg":30}'</span> \
+  06-ai/prediction-output.json
+cat 06-ai/prediction-output.json</pre></div>
+    </div>
+    <div class="tab-body" id="p6-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>Model trained</td><td><code>python 06-ai/traffic_predictor.py</code></td><td>Prediction printed, SSM updated</td></tr>
+        <tr><td>SSM param</td><td><code>aws ssm get-parameter --name /jio-capstone/predicted-replicas</code></td><td>Value: integer</td></tr>
+        <tr><td>SageMaker endpoint</td><td><code>aws sagemaker describe-endpoint --endpoint-name jio-traffic-predictor-endpoint</code></td><td>EndpointStatus: InService</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 7 -->
+<div class="phase-card" id="phase7">
+  <div class="phase-header" onclick="toggleCard('phase7')">
+    <div class="phase-num" style="background:rgba(61,214,140,0.12);color:var(--green)">P7</div>
+    <div class="phase-meta">
+      <div class="phase-title">Data Layer — DynamoDB · Kinesis · ElastiCache Redis</div>
+      <div class="phase-sub">dynamodb · kinesis streams · redis docker sim · session storage</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">DynamoDB Free</span>
+      <span class="tag tag-sim">Redis: Docker</span>
+      <button class="mark-done-btn" id="btn-phase7" onclick="event.stopPropagation();markDone('phase7',7)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p7-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p7-sim')">⚙ Redis Sim</span>
+      <span class="tab" onclick="switchTab(this,'p7-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p7-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">DynamoDB tables</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Sessions table (viewer session management)</span>
+aws dynamodb create-table \
+  --table-name jio-capstone-sessions \
+  --attribute-definitions \
+    AttributeName=session_id,AttributeType=S \
+    AttributeName=user_id,AttributeType=S \
+  --key-schema \
+    AttributeName=session_id,KeyType=HASH \
+    AttributeName=user_id,KeyType=RANGE \
+  --billing-mode PAY_PER_REQUEST \
+  --tags Key=Project,Value=jio-capstone
+
+<span class="c"># Enable TTL (auto-expire sessions after 24h)</span>
+aws dynamodb update-time-to-live \
+  --table-name jio-capstone-sessions \
+  --time-to-live-specification Enabled=true,AttributeName=expires_at
+
+<span class="c"># Content metadata table</span>
+aws dynamodb create-table \
+  --table-name jio-capstone-content \
+  --attribute-definitions AttributeName=content_id,AttributeType=S \
+  --key-schema AttributeName=content_id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
+
+<span class="c"># Insert test session record</span>
+aws dynamodb put-item \
+  --table-name jio-capstone-sessions \
+  --item <span class="s">'{
+    "session_id": {"S": "sess-001"},
+    "user_id": {"S": "user-12345"},
+    "stream_quality": {"S": "1080p"},
+    "bitrate_kbps": {"N": "4500"},
+    "started_at": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"},
+    "expires_at": {"N": "'$(($(date +%s) + 86400))'"}
+  }'</span>
+
+echo <span class="s">"✅ DynamoDB tables created"</span>
+aws dynamodb describe-table --table-name jio-capstone-sessions \
+  --query <span class="s">'Table.{Status:TableStatus,Items:ItemCount}'</span></pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Kinesis Data Stream</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create Kinesis stream (1 shard = free tier)</span>
+aws kinesis create-stream \
+  --stream-name jio-capstone-viewer-events \
+  --shard-count 1
+
+<span class="c"># Wait for stream to be active</span>
+aws kinesis wait stream-exists --stream-name jio-capstone-viewer-events
+
+<span class="c"># Publish test viewer event</span>
+aws kinesis put-record \
+  --stream-name jio-capstone-viewer-events \
+  --partition-key <span class="s">"user-12345"</span> \
+  --data <span class="s">$(echo '{"event":"STREAM_START","user_id":"user-12345","quality":"1080p","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'| base64)</span>
+
+<span class="c"># Read from stream</span>
+<span class="v">SHARD_ITER</span>=$(aws kinesis get-shard-iterator \
+  --stream-name jio-capstone-viewer-events \
+  --shard-id shardId-000000000000 \
+  --shard-iterator-type TRIM_HORIZON \
+  --query <span class="s">'ShardIterator'</span> --output text)
+aws kinesis get-records --shard-iterator <span class="s">"$SHARD_ITER"</span> \
+  --query <span class="s">'Records[*].Data'</span> --output text | base64 -d</pre></div>
+    </div>
+    <div class="tab-body" id="p7-sim">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">[SIM] Redis via Docker</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Run Redis locally (simulates ElastiCache)</span>
+docker run -d --name jio-redis \
+  -p 6379:6379 \
+  --restart unless-stopped \
+  redis:7-alpine redis-server \
+  --maxmemory 256mb \
+  --maxmemory-policy allkeys-lru
+
+<span class="c"># Verify Redis is running</span>
+docker exec jio-redis redis-cli ping
+
+<span class="c"># Simulate session cache operations</span>
+docker exec jio-redis redis-cli SET session:sess-001 <span class="s">'{"user":"user-12345","quality":"1080p"}'</span> EX 86400
+docker exec jio-redis redis-cli GET session:sess-001
+
+<span class="c"># Simulate viewer count (atomic increment)</span>
+docker exec jio-redis redis-cli SET viewer_count 0
+<span class="k">for</span> i in $(seq 1 100); <span class="k">do</span>
+  docker exec jio-redis redis-cli INCR viewer_count > /dev/null
+<span class="k">done</span>
+docker exec jio-redis redis-cli GET viewer_count
+<span class="c"># Expected: 100</span></pre></div>
+    </div>
+    <div class="tab-body" id="p7-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>DDB sessions</td><td><code>aws dynamodb get-item --table-name jio-capstone-sessions --key '{"session_id":{"S":"sess-001"},"user_id":{"S":"user-12345"}}'</code></td><td>Item returned</td></tr>
+        <tr><td>Kinesis event</td><td>shard iterator read above</td><td>JSON event decoded</td></tr>
+        <tr><td>Redis ping</td><td><code>docker exec jio-redis redis-cli ping</code></td><td>PONG</td></tr>
+        <tr><td>TTL on session</td><td><code>aws dynamodb describe-time-to-live --table-name jio-capstone-sessions</code></td><td>Status: ENABLED</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 8 -->
+<div class="phase-card" id="phase8">
+  <div class="phase-header" onclick="toggleCard('phase8')">
+    <div class="phase-num" style="background:rgba(79,142,247,0.12);color:var(--accent)">P8</div>
+    <div class="phase-meta">
+      <div class="phase-title">Observability — CloudWatch · X-Ray · Dashboards · Alarms</div>
+      <div class="phase-sub">cloudwatch · x-ray · custom metrics · alarms · dashboard · sns</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">10 Metrics Free</span>
+      <button class="mark-done-btn" id="btn-phase8" onclick="event.stopPropagation();markDone('phase8',8)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p8-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p8-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p8-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">CloudWatch alarms + dashboard</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># SNS topic for alarm notifications</span>
+<span class="v">ALARM_TOPIC</span>=$(aws sns create-topic --name jio-alarms \
+  --query <span class="s">'TopicArn'</span> --output text)
+aws sns subscribe --topic-arn <span class="s">"$ALARM_TOPIC"</span> \
+  --protocol email --notification-endpoint YOUR_EMAIL@example.com
+
+<span class="c"># Alarm 1: 5xx Error Rate > 1%</span>
+aws cloudwatch put-metric-alarm \
+  --alarm-name jio-5xx-rate-high \
+  --alarm-description <span class="s">"CloudFront 5xx error rate too high"</span> \
+  --metric-name 5xxErrorRate \
+  --namespace AWS/CloudFront \
+  --dimensions Name=DistributionId,Value=REPLACE_WITH_CF_DIST_ID \
+  --statistic Average --period 300 \
+  --threshold 1.0 --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2 \
+  --alarm-actions <span class="s">"$ALARM_TOPIC"</span>
+
+<span class="c"># Alarm 2: Kinesis Iterator Age > 5min (processing lag)</span>
+aws cloudwatch put-metric-alarm \
+  --alarm-name jio-kinesis-lag \
+  --alarm-description <span class="s">"Kinesis stream falling behind"</span> \
+  --metric-name GetRecords.IteratorAgeMilliseconds \
+  --namespace AWS/Kinesis \
+  --dimensions Name=StreamName,Value=jio-capstone-viewer-events \
+  --statistic Maximum --period 60 \
+  --threshold 300000 --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 1 \
+  --alarm-actions <span class="s">"$ALARM_TOPIC"</span>
+
+<span class="c"># Publish custom metric (viewer count)</span>
+aws cloudwatch put-metric-data \
+  --namespace JioCapstone/Streaming \
+  --metric-data <span class="s">'[
+    {"MetricName":"ActiveViewers","Value":50000000,"Unit":"Count","Dimensions":[{"Name":"Environment","Value":"production"}]},
+    {"MetricName":"P95Latency","Value":45,"Unit":"Milliseconds","Dimensions":[{"Name":"Environment","Value":"production"}]}
+  ]'</span>
+
+<span class="c"># Create CloudWatch Dashboard</span>
+aws cloudwatch put-dashboard \
+  --dashboard-name JioCapstone \
+  --dashboard-body <span class="s">'{
+    "widgets":[
+      {"type":"metric","properties":{"title":"Active Viewers","metrics":[["JioCapstone/Streaming","ActiveViewers"]],"view":"timeSeries","period":60},"x":0,"y":0,"width":12,"height":6},
+      {"type":"metric","properties":{"title":"5xx Error Rate","metrics":[["AWS/CloudFront","5xxErrorRate"]],"view":"timeSeries","period":60},"x":12,"y":0,"width":12,"height":6},
+      {"type":"alarm","properties":{"title":"Active Alarms","alarms":["arn:aws:cloudwatch:ap-south-1:'${AWS_ACCOUNT_ID}':alarm:jio-5xx-rate-high"]},"x":0,"y":6,"width":8,"height":3}
+    ]
+  }'</span>
+
+echo <span class="s">"✅ Dashboard: https://ap-south-1.console.aws.amazon.com/cloudwatch/home#dashboards:name=JioCapstone"</span></pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Enable X-Ray tracing on Lambda</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Enable X-Ray active tracing on Lambda@Edge function</span>
+aws lambda update-function-configuration \
+  --function-name jio-edge-router \
+  --tracing-config Mode=Active \
+  --region us-east-1
+
+<span class="c"># Create X-Ray sampling rule</span>
+aws xray create-sampling-rule \
+  --sampling-rule <span class="s">'{
+    "RuleName":"jio-video-sampling",
+    "Priority":1,
+    "ReservoirSize":5,
+    "FixedRate":0.1,
+    "URLPath":"/live/*",
+    "Host":"*",
+    "HTTPMethod":"GET",
+    "ServiceName":"jio-capstone",
+    "ServiceType":"*",
+    "ResourceARN":"*",
+    "Version":1
+  }'</span>
+
+echo <span class="s">"✅ X-Ray enabled — traces at: https://ap-south-1.console.aws.amazon.com/xray/home"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p8-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>Alarms exist</td><td><code>aws cloudwatch describe-alarms --alarm-name-prefix jio --query 'MetricAlarms[*].AlarmName'</code></td><td>3 alarms listed</td></tr>
+        <tr><td>Custom metric</td><td><code>aws cloudwatch get-metric-statistics --namespace JioCapstone/Streaming --metric-name ActiveViewers --start-time $(date -u -d '-1 hour' +%Y-%m-%dT%H:%M:%S) --end-time $(date -u +%Y-%m-%dT%H:%M:%S) --period 3600 --statistics Average</code></td><td>Datapoint returned</td></tr>
+        <tr><td>Dashboard</td><td>Visit CloudWatch console</td><td>JioCapstone dashboard visible</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 9 -->
+<div class="phase-card" id="phase9">
+  <div class="phase-header" onclick="toggleCard('phase9')">
+    <div class="phase-num" style="background:rgba(240,81,81,0.12);color:var(--red)">P9</div>
+    <div class="phase-meta">
+      <div class="phase-title">Security Layer — WAF · Shield · Secrets Manager</div>
+      <div class="phase-sub">waf web acl · rate limiting · managed rules · secrets rotation</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">Shield Std Free</span>
+      <span class="tag tag-cost">WAF $5+/mo</span>
+      <button class="mark-done-btn" id="btn-phase9" onclick="event.stopPropagation();markDone('phase9',9)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p9-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p9-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p9-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">WAF Web ACL with managed rules</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create WAF Web ACL (us-east-1 for CloudFront)</span>
+<span class="v">WAF_ACL</span>=$(aws wafv2 create-web-acl \
+  --name jio-capstone-waf \
+  --scope CLOUDFRONT \
+  --region us-east-1 \
+  --default-action Allow={} \
+  --rules <span class="s">'[
+    {
+      "Name":"AWSManagedRulesCommonRuleSet",
+      "Priority":1,
+      "OverrideAction":{"None":{}},
+      "Statement":{"ManagedRuleGroupStatement":{"VendorName":"AWS","Name":"AWSManagedRulesCommonRuleSet"}},
+      "VisibilityConfig":{"SampledRequestsEnabled":true,"CloudWatchMetricsEnabled":true,"MetricName":"CommonRules"}
+    },
+    {
+      "Name":"RateLimitRule",
+      "Priority":2,
+      "Action":{"Block":{}},
+      "Statement":{"RateBasedStatement":{"Limit":2000,"AggregateKeyType":"IP"}},
+      "VisibilityConfig":{"SampledRequestsEnabled":true,"CloudWatchMetricsEnabled":true,"MetricName":"RateLimit"}
+    },
+    {
+      "Name":"AWSManagedRulesKnownBadInputsRuleSet",
+      "Priority":3,
+      "OverrideAction":{"None":{}},
+      "Statement":{"ManagedRuleGroupStatement":{"VendorName":"AWS","Name":"AWSManagedRulesKnownBadInputsRuleSet"}},
+      "VisibilityConfig":{"SampledRequestsEnabled":true,"CloudWatchMetricsEnabled":true,"MetricName":"BadInputs"}
+    }
+  ]'</span> \
+  --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=JioWAF \
+  --query <span class="s">'Summary.ARN'</span> --output text)
+echo <span class="s">"WAF ACL ARN: $WAF_ACL"</span>
+
+<span class="c"># Associate WAF with CloudFront distribution</span>
+aws wafv2 associate-web-acl \
+  --web-acl-arn <span class="s">"$WAF_ACL"</span> \
+  --resource-arn arn:aws:cloudfront::<span class="v">${AWS_ACCOUNT_ID}</span>:distribution/REPLACE_CF_ID \
+  --region us-east-1</pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Secrets Manager — API key rotation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Store MediaPackage credentials in Secrets Manager</span>
+aws secretsmanager create-secret \
+  --name jio-capstone/mediapackage-creds \
+  --description <span class="s">"MediaPackage ingest credentials"</span> \
+  --secret-string <span class="s">'{"username":"jio-ingest","password":"CHANGE_ME_STRONG_PASSWORD"}'</span>
+
+<span class="c"># Retrieve secret in application</span>
+aws secretsmanager get-secret-value \
+  --secret-id jio-capstone/mediapackage-creds \
+  --query <span class="s">'SecretString'</span> --output text | jq .
+
+<span class="c"># Test WAF: SQL injection attempt (should be blocked)</span>
+echo <span class="s">"Testing WAF block..."</span>
+curl -s -o /dev/null -w <span class="s">"%{http_code}"</span> \
+  <span class="s">"https://REPLACE_CF_DOMAIN/live/master.m3u8?id=1' OR '1'='1"</span>
+<span class="c"># Expected: 403 (blocked by WAF)</span></pre></div>
+    </div>
+    <div class="tab-body" id="p9-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Test</th><th>Expected</th></tr>
+        <tr><td>WAF created</td><td><code>aws wafv2 list-web-acls --scope CLOUDFRONT --region us-east-1</code></td><td>jio-capstone-waf listed</td></tr>
+        <tr><td>SQL injection blocked</td><td>curl with SQLi payload above</td><td>HTTP 403</td></tr>
+        <tr><td>Rate limit</td><td>Rapid requests from same IP</td><td>HTTP 429 after 2000 req</td></tr>
+        <tr><td>Secret stored</td><td><code>aws secretsmanager describe-secret --secret-id jio-capstone/mediapackage-creds</code></td><td>Secret ARN returned</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 10 -->
+<div class="phase-card" id="phase10">
+  <div class="phase-header" onclick="toggleCard('phase10')">
+    <div class="phase-num" style="background:rgba(245,166,35,0.12);color:var(--amber)">P10</div>
+    <div class="phase-meta">
+      <div class="phase-title">Load Simulation — JMeter + Chaos Engineering</div>
+      <div class="phase-sub">apache jmeter · load test · origin kill · chaos · fallback verification</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-sim">Chaos SIM</span>
+      <button class="mark-done-btn" id="btn-phase10" onclick="event.stopPropagation();markDone('phase10',10)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p10-jmeter')">⚙ JMeter Load Test</span>
+      <span class="tab" onclick="switchTab(this,'p10-chaos')">💀 Chaos Engineering</span>
+      <span class="tab" onclick="switchTab(this,'p10-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p10-jmeter">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">JMeter load test (concurrent HLS requests)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Install JMeter</span>
+<span class="k">if</span> [ ! -d ~/apache-jmeter* ]; <span class="k">then</span>
+  wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.3.tgz
+  tar -xzf apache-jmeter-5.6.3.tgz
+<span class="k">fi</span>
+
+<span class="c"># Create JMeter test plan (XML)</span>
+cat > 10-simulation/hls-load-test.jmx <span class="s">&lt;&lt; 'JMXEOF'</span>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;jmeterTestPlan version="1.2" properties="5.0"&gt;
+  &lt;hashTree&gt;
+    &lt;TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Jio HLS Load Test"&gt;
+      &lt;boolProp name="TestPlan.functional_mode"&gt;false&lt;/boolProp&gt;
+    &lt;/TestPlan&gt;
+    &lt;hashTree&gt;
+      &lt;ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="HLS Viewers"&gt;
+        &lt;intProp name="ThreadGroup.num_threads"&gt;500&lt;/intProp&gt;
+        &lt;intProp name="ThreadGroup.ramp_time"&gt;60&lt;/intProp&gt;
+        &lt;boolProp name="ThreadGroup.scheduler"&gt;true&lt;/boolProp&gt;
+        &lt;stringProp name="ThreadGroup.duration"&gt;300&lt;/stringProp&gt;
+      &lt;/ThreadGroup&gt;
+    &lt;/hashTree&gt;
+  &lt;/hashTree&gt;
+&lt;/jmeterTestPlan&gt;
+JMXEOF
+
+<span class="c"># Run JMeter (headless, 500 concurrent users for 5 min)</span>
+~/apache-jmeter*/bin/jmeter -n \
+  -t 10-simulation/hls-load-test.jmx \
+  -l 10-simulation/results.jtl \
+  -e -o 10-simulation/report/ \
+  -Jserver_url=$(echo <span class="v">$CF_DIST</span>) \
+  -Jthreads=500 -Jrampup=60 -Jduration=300
+
+echo <span class="s">"✅ Report: open 10-simulation/report/index.html"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p10-chaos">
+      <div class="alert alert-danger"><span class="alert-icon">🔥</span><span><strong>Chaos Engineering:</strong> Kill the origin to verify graceful degradation works. Users should see scoreboard, not blank screen.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Chaos: Kill origin → verify fallback</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre"><span class="c"># CHAOS EXPERIMENT 1: Kill streaming origin pods</span>
+echo <span class="s">"--- CHAOS START: Killing origin pods ---"</span>
+kubectl scale deployment streaming-origin --replicas=0
+kubectl get pods  <span class="c"># Should show no running pods</span>
+
+<span class="c"># Verify CloudFront serves static fallback (not blank)</span>
+sleep 10
+HTTP_CODE=$(curl -s -o /dev/null -w <span class="s">"%{http_code}"</span> https://<span class="v">$CF_DIST</span>/live/master.m3u8)
+echo <span class="s">"Response during chaos: $HTTP_CODE"</span>
+<span class="c"># Lambda@Edge should return 200 with static scoreboard</span>
+
+<span class="c"># CHAOS EXPERIMENT 2: Block S3 origin temporarily</span>
+aws s3api put-bucket-policy --bucket <span class="v">${S3_BUCKET}</span> \
+  --policy <span class="s">'{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Principal":"*","Action":"s3:GetObject","Resource":"arn:aws:s3:::'${S3_BUCKET}'/*"}]}'</span>
+echo <span class="s">"S3 blocked. CloudFront should use origin failover group..."</span>
+sleep 15
+
+<span class="c"># RECOVERY: Restore origin</span>
+kubectl scale deployment streaming-origin --replicas=3
+aws s3api put-bucket-policy --bucket <span class="v">${S3_BUCKET}</span> \
+  --policy file://05-cdn/s3-bucket-policy.json
+
+echo <span class="s">"--- CHAOS END: Origin restored ---"</span>
+kubectl get pods  <span class="c"># Pods should be Running again</span></pre></div>
+    </div>
+    <div class="tab-body" id="p10-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Metric</th><th>Pass Criteria</th></tr>
+        <tr><td>Error rate</td><td>JMeter results.jtl</td><td>&lt;1% error rate at 500 users</td></tr>
+        <tr><td>P99 latency</td><td>JMeter report</td><td>&lt;500ms for manifest requests</td></tr>
+        <tr><td>Chaos fallback</td><td>curl during origin kill</td><td>HTTP 200 (not 503)</td></tr>
+        <tr><td>Recovery time</td><td>Time from kubectl scale → pods Ready</td><td>&lt;60 seconds</td></tr>
+        <tr><td>HPA triggered</td><td><code>kubectl get hpa</code></td><td>Replicas increased during load</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 11 -->
+<div class="phase-card" id="phase11">
+  <div class="phase-header" onclick="toggleCard('phase11')">
+    <div class="phase-num" style="background:rgba(79,142,247,0.12);color:var(--accent)">P11</div>
+    <div class="phase-meta">
+      <div class="phase-title">CI/CD Pipeline — CodePipeline + CodeBuild + ECR</div>
+      <div class="phase-sub">ecr · codebuild · codepipeline · buildspec · docker · deploy</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-free">1 Pipeline Free</span>
+      <button class="mark-done-btn" id="btn-phase11" onclick="event.stopPropagation();markDone('phase11',11)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tabs">
+      <span class="tab active" onclick="switchTab(this,'p11-aws')">☁ AWS Commands</span>
+      <span class="tab" onclick="switchTab(this,'p11-val')">✓ Validation</span>
+    </div>
+    <div class="tab-body active" id="p11-aws">
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">ECR + Docker image</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre"><span class="c"># Create ECR repository</span>
+aws ecr create-repository \
+  --repository-name jio-capstone/streaming-origin \
+  --image-scanning-configuration scanOnPush=true \
+  --encryption-configuration encryptionType=AES256
+
+<span class="c"># Build and push Docker image</span>
+<span class="v">ECR_URI</span>=<span class="s">"${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com"</span>
+aws ecr get-login-password --region ap-south-1 | \
+  docker login --username AWS --password-stdin <span class="s">"$ECR_URI"</span>
+
+cat > 11-cicd/Dockerfile <span class="s">&lt;&lt; 'EOF'</span>
+FROM nginx:alpine
+COPY 04-media/output/ /usr/share/nginx/html/live/
+EXPOSE 80
+EOF
+
+docker build -t <span class="s">"$ECR_URI/jio-capstone/streaming-origin:latest"</span> -f 11-cicd/Dockerfile .
+docker push <span class="s">"$ECR_URI/jio-capstone/streaming-origin:latest"</span>
+echo <span class="s">"✅ Image pushed to ECR"</span></pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">YAML</span><span class="code-title">buildspec.yml (CodeBuild)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>version: 0.2
+<span class="k">phases</span>:
+  <span class="k">pre_build</span>:
+    commands:
+      - aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+  <span class="k">build</span>:
+    commands:
+      - docker build -t $ECR_URI/jio-capstone/streaming-origin:$COMMIT_HASH .
+      - docker tag $ECR_URI/jio-capstone/streaming-origin:$COMMIT_HASH $ECR_URI/jio-capstone/streaming-origin:latest
+  <span class="k">post_build</span>:
+    commands:
+      - docker push $ECR_URI/jio-capstone/streaming-origin:$COMMIT_HASH
+      - docker push $ECR_URI/jio-capstone/streaming-origin:latest
+      - kubectl set image deployment/streaming-origin origin=$ECR_URI/jio-capstone/streaming-origin:$COMMIT_HASH
+      - kubectl rollout status deployment/streaming-origin
+      - echo Build completed on $(date)</pre></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Create CodePipeline</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre><span class="c"># Create pipeline (connects GitHub → CodeBuild → EKS)</span>
+aws codepipeline create-pipeline \
+  --pipeline <span class="s">'{
+    "name":"jio-capstone-pipeline",
+    "roleArn":"arn:aws:iam::'${AWS_ACCOUNT_ID}':role/jio-codepipeline-role",
+    "artifactStore":{"type":"S3","location":"'${S3_BUCKET}'"},
+    "stages":[
+      {"name":"Source","actions":[{
+        "name":"GitHubSource","actionTypeId":{"category":"Source","owner":"ThirdParty","provider":"GitHub","version":"2"},
+        "outputArtifacts":[{"name":"SourceOutput"}],
+        "configuration":{"Owner":"YOUR_ORG","Repo":"jio-aws-capstone","Branch":"main","OAuthToken":"GITHUB_TOKEN"}
+      }]},
+      {"name":"Build","actions":[{
+        "name":"CodeBuild","actionTypeId":{"category":"Build","owner":"AWS","provider":"CodeBuild","version":"1"},
+        "inputArtifacts":[{"name":"SourceOutput"}],
+        "outputArtifacts":[{"name":"BuildOutput"}],
+        "configuration":{"ProjectName":"jio-capstone-build"}
+      }]}
+    ]
+  }'</span>
+echo <span class="s">"✅ Pipeline created"</span></pre></div>
+    </div>
+    <div class="tab-body" id="p11-val">
+      <table class="vtable">
+        <tr><th>Check</th><th>Command</th><th>Expected</th></tr>
+        <tr><td>ECR image</td><td><code>aws ecr describe-images --repository-name jio-capstone/streaming-origin</code></td><td>Image tag: latest</td></tr>
+        <tr><td>Pipeline state</td><td><code>aws codepipeline get-pipeline-state --name jio-capstone-pipeline</code></td><td>Latest execution Succeeded</td></tr>
+        <tr><td>EKS rollout</td><td><code>kubectl rollout history deployment/streaming-origin</code></td><td>Revision 2+ visible</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 12 -->
+<div class="phase-card" id="phase12">
+  <div class="phase-header" onclick="toggleCard('phase12')">
+    <div class="phase-num" style="background:rgba(240,81,81,0.12);color:var(--red)">P12</div>
+    <div class="phase-meta">
+      <div class="phase-title">Cleanup & Cost Teardown — Delete in Cost Order</div>
+      <div class="phase-sub">eks delete · cloudfront disable · s3 empty · iam cleanup · vpc delete</div>
+    </div>
+    <div class="phase-tags">
+      <span class="tag tag-danger" style="background:rgba(240,81,81,0.1);border:1px solid rgba(240,81,81,0.3);color:var(--red)">CRITICAL: Run This!</span>
+      <button class="mark-done-btn" id="btn-phase12" onclick="event.stopPropagation();markDone('phase12',12)">✓ Mark Done</button>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div class="tab-body active" style="display:block;padding:20px">
+      <div class="alert alert-danger"><span class="alert-icon">🚨</span><span>Always delete EKS first — it's the most expensive at $0.10/hr. Then stop MediaLive if running. This teardown script runs in cost order.</span></div>
+      <div class="code-block"><div class="code-hdr"><span class="code-lang">BASH</span><span class="code-title">Full teardown (safe to run anytime)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+<pre>#!/bin/bash
+source .env
+echo <span class="s">"⚠️  TEARDOWN STARTING — $(date)"</span>
+
+<span class="c"># 1. EKS FIRST ($0.10/hr cluster charge)</span>
+echo <span class="s">"[1/8] Deleting EKS cluster..."</span>
+eksctl delete cluster --name jio-streaming-cluster --region ap-south-1 || true
+
+<span class="c"># 2. MediaLive channels (~$15/hr)</span>
+echo <span class="s">"[2/8] Stopping MediaLive channels..."</span>
+<span class="k">for</span> ch in $(aws mediapackage list-channels --query <span class="s">'Channels[*].Id'</span> --output text 2>/dev/null); <span class="k">do</span>
+  aws mediapackage delete-channel --id <span class="s">"$ch"</span> 2>/dev/null
+<span class="k">done</span>
+
+<span class="c"># 3. SageMaker endpoint</span>
+echo <span class="s">"[3/8] Deleting SageMaker resources..."</span>
+aws sagemaker delete-endpoint --endpoint-name jio-traffic-predictor-endpoint 2>/dev/null
+aws sagemaker delete-endpoint-config --endpoint-config-name jio-predictor-config 2>/dev/null
+aws sagemaker delete-model --model-name jio-traffic-predictor 2>/dev/null
+
+<span class="c"># 4. CloudFront distribution (must disable first)</span>
+echo <span class="s">"[4/8] Disabling CloudFront distribution..."</span>
+<span class="c"># Disable via console — CLI requires ETag management (complex)</span>
+echo <span class="s">"   → Disable manually in CloudFront console, then delete"</span>
+
+<span class="c"># 5. S3 bucket (must empty first)</span>
+echo <span class="s">"[5/8] Emptying S3 bucket..."</span>
+aws s3 rm s3://<span class="v">${S3_BUCKET}</span>/ --recursive 2>/dev/null
+aws s3 rb s3://<span class="v">${S3_BUCKET}</span>/ 2>/dev/null
+
+<span class="c"># 6. DynamoDB tables</span>
+echo <span class="s">"[6/8] Deleting DynamoDB tables..."</span>
+aws dynamodb delete-table --table-name jio-capstone-sessions 2>/dev/null
+aws dynamodb delete-table --table-name jio-capstone-content 2>/dev/null
+
+<span class="c"># 7. Kinesis stream</span>
+aws kinesis delete-stream --stream-name jio-capstone-viewer-events 2>/dev/null
+
+<span class="c"># 8. VPC resources (order matters!)</span>
+echo <span class="s">"[8/8] Cleaning VPC..."</span>
+source 01-networking/ids.env
+<span class="c"># Delete security groups</span>
+aws ec2 delete-security-group --group-id <span class="v">${ALB_SG}</span> 2>/dev/null
+aws ec2 delete-security-group --group-id <span class="v">${EKS_SG}</span> 2>/dev/null
+<span class="c"># Detach and delete IGW</span>
+aws ec2 detach-internet-gateway --internet-gateway-id <span class="v">${IGW_ID}</span> --vpc-id <span class="v">${VPC_ID}</span> 2>/dev/null
+aws ec2 delete-internet-gateway --internet-gateway-id <span class="v">${IGW_ID}</span> 2>/dev/null
+<span class="c"># Delete subnets</span>
+<span class="k">for</span> subnet in <span class="v">$PUB1A</span> <span class="v">$PUB1B</span> <span class="v">$PRV1A</span> <span class="v">$PRV1B</span>; <span class="k">do</span>
+  aws ec2 delete-subnet --subnet-id <span class="s">"$subnet"</span> 2>/dev/null
+<span class="k">done</span>
+<span class="c"># Delete VPC</span>
+aws ec2 delete-vpc --vpc-id <span class="v">${VPC_ID}</span> 2>/dev/null
+
+<span class="c"># Stop local Docker containers</span>
+docker stop jio-redis 2>/dev/null && docker rm jio-redis 2>/dev/null
+minikube stop --profile jio-capstone 2>/dev/null
+
+echo <span class="s">""</span>
+echo <span class="s">"✅ TEARDOWN COMPLETE"</span>
+echo <span class="s">"   Verify: AWS Cost Explorer → should show charges stopped"</span>
+echo <span class="s">"   Check: EC2 console → no running instances"</span>
+echo <span class="s">"   Check: EKS console → no clusters"</span></pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL CHECKLIST -->
+<div class="phase-card" id="finalCheck">
+  <div class="phase-header" onclick="toggleCard('finalCheck')">
+    <div class="phase-num" style="background:rgba(61,214,140,0.12);color:var(--green)">✓</div>
+    <div class="phase-meta">
+      <div class="phase-title">TPM Final Validation Checklist — E2E Demo Readiness</div>
+      <div class="phase-sub">all systems · cto demo criteria · sign-off checklist</div>
+    </div>
+    <div class="phase-tags"><span class="tag tag-sim">REFERENCE</span></div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="phase-body">
+    <div style="padding:20px">
+      <div class="tpm-note"><div class="tpm-note-label">CTO Demo Criteria</div>
+        <p>Your CTO expects to see: end-to-end stream, AI prediction working, graceful degradation proven, costs under control.</p>
+      </div>
+      <ul class="checklist" id="finalChecklist">
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>HLS/CMAF stream plays end-to-end in VLC or browser</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>CloudFront signed URL expires after configured TTL</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>EKS pods scale under JMeter load test (HPA triggered)</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>Lambda@Edge routes scoreboard requests to S3 fallback</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>SageMaker/Python model returns traffic prediction for test event</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>CloudWatch alarm triggers SNS notification on 5xx spike</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>DynamoDB table stores and retrieves session records</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>Kinesis stream receives and processes viewer events</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>WAF blocks simulated SQL injection request (HTTP 403)</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>Billing alarm set at $5 — received test notification email</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>CodePipeline executed successfully end-to-end</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>Chaos experiment: origin kill → graceful degradation verified</span></li>
+        <li><div class="check-box" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><span>Teardown script run — no lingering resources</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+const PHASE_IDS = ['phase0','phase1','phase2','phase3','phase4','phase5','phase6','phase7','phase8','phase9','phase10','phase11','phase12'];
+const done = new Set();
+
+function toggleCard(id) {
+  const card = document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+function switchTab(el, targetId) {
+  const panel = el.closest('.phase-body');
+  panel.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.tab-body').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const tgt = document.getElementById(targetId);
+  if (tgt) tgt.classList.add('active');
+}
+
+function markDone(phaseId, idx) {
+  const btn = document.getElementById('btn-' + phaseId);
+  if (done.has(idx)) {
+    done.delete(idx);
+    btn.classList.remove('done');
+    btn.textContent = '✓ Mark Done';
+  } else {
+    done.add(idx);
+    btn.classList.add('done');
+    btn.textContent = '✓ Done!';
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = Math.round((done.size / PHASE_IDS.length) * 100);
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progPct').textContent = pct + '%';
+  const dots = document.getElementById('phaseDots').querySelectorAll('.pdot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('done', done.has(i));
+    d.classList.toggle('active', !done.has(i) && i === Math.min(...Array.from({length: PHASE_IDS.length}, (_,x) => x).filter(x => !done.has(x))));
+  });
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// Build phase dots
+const dotsContainer = document.getElementById('phaseDots');
+PHASE_IDS.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'pdot' + (i === 0 ? ' active' : '');
+  d.title = 'Phase ' + i;
+  d.onclick = () => {
+    const card = document.getElementById(PHASE_IDS[i]);
+    card.classList.add('open');
+    card.scrollIntoView({behavior: 'smooth', block: 'start'});
+  };
+  dotsContainer.appendChild(d);
+});
+</script>
+</body>
+</html>
