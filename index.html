@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TPM Master Playbook — Jio AWS Hyperscale Streaming</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+<style>
+:root {
+  --amber-50:#FAEEDA;--amber-100:#FAC775;--amber-200:#EF9F27;--amber-400:#BA7517;--amber-600:#854F0B;--amber-800:#633806;
+  --blue-50:#E6F1FB;--blue-100:#B5D4F4;--blue-200:#85B7EB;--blue-400:#378ADD;--blue-600:#185FA5;--blue-800:#0C447C;
+  --teal-50:#E1F5EE;--teal-100:#9FE1CB;--teal-200:#5DCAA5;--teal-400:#1D9E75;--teal-600:#0F6E56;--teal-800:#085041;
+  --red-50:#FCEBEB;--red-200:#F09595;--red-400:#E24B4A;--red-800:#791F1F;
+  --gray-50:#F1EFE8;--gray-100:#D3D1C7;--gray-200:#B4B2A9;--gray-400:#888780;--gray-600:#5F5E5A;--gray-800:#444441;
+  --coral-50:#FAECE7;--coral-200:#F0997B;--coral-400:#D85A30;--coral-800:#712B13;
+  --purple-50:#EEEDFE;--purple-200:#AFA9EC;--purple-400:#7F77DD;--purple-800:#3C3489;
+  --green-50:#EAF3DE;--green-200:#97C459;--green-400:#639922;--green-800:#27500A;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,'Segoe UI',system-ui,sans-serif);font-size:14px;line-height:1.6;color:var(--color-text-primary,#1a1a1a);background:var(--color-background-tertiary,#f8f8f6)}
+h1{font-size:22px;font-weight:500}h2{font-size:18px;font-weight:500}h3{font-size:16px;font-weight:500}
+h4{font-size:14px;font-weight:500}h5{font-size:13px;font-weight:500}
+p{color:var(--color-text-secondary,#555);font-size:13px;line-height:1.7}
+a{color:var(--blue-600);text-decoration:none}
+#nav-bar{position:sticky;top:0;z-index:100;background:var(--color-background-primary,#fff);border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.12));display:flex;align-items:center;gap:2px;padding:0 8px;overflow-x:auto;scrollbar-width:none}
+#nav-bar::-webkit-scrollbar{display:none}
+.nav-btn{display:flex;align-items:center;gap:5px;padding:10px 10px;font-size:12px;font-weight:500;border:none;background:transparent;color:var(--color-text-secondary,#777);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color 0.15s}
+.nav-btn:hover{color:var(--color-text-primary,#1a1a1a)}
+.nav-btn.active{color:var(--amber-600);border-bottom-color:var(--amber-200)}
+.nav-btn i{font-size:15px}
+.section{display:none;padding:20px}
+.section.active{display:block}
+.card{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.card-sm{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.metric-card{background:var(--color-background-secondary,#f5f5f0);border-radius:8px;padding:12px 16px;text-align:center}
+.metric-card .val{font-size:24px;font-weight:500;color:var(--color-text-primary,#1a1a1a);display:block}
+.metric-card .lbl{font-size:11px;color:var(--color-text-secondary,#777);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px}
+.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-amber{background:var(--amber-50);color:var(--amber-600)}
+.badge-blue{background:var(--blue-50);color:var(--blue-600)}
+.badge-teal{background:var(--teal-50);color:var(--teal-600)}
+.badge-red{background:var(--red-50);color:var(--red-800)}
+.badge-green{background:var(--green-50);color:var(--green-800)}
+.badge-gray{background:var(--gray-50);color:var(--gray-600)}
+.badge-purple{background:var(--purple-50);color:var(--purple-800)}
+.badge-coral{background:var(--coral-50);color:var(--coral-800)}
+.tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:11px;background:var(--gray-50);color:var(--gray-600);border:0.5px solid var(--gray-100)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--color-background-secondary,#f5f5f0);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;color:var(--color-text-secondary,#777);padding:8px 10px;text-align:left;border-bottom:0.5px solid var(--color-border-tertiary)}
+tbody td{padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.07));vertical-align:top;color:var(--color-text-primary,#1a1a1a)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--color-background-secondary,#f8f8f6)}
+.prog-bar-wrap{background:var(--gray-50);border-radius:99px;height:6px;overflow:hidden}
+.prog-bar{height:100%;border-radius:99px;background:var(--amber-200)}
+.section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.section-head h2{flex:1}
+.divider{border:none;border-top:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.1));margin:16px 0}
+.sprint-phase{border-left:2px solid var(--amber-200);padding-left:14px;margin-bottom:20px}
+.sprint-phase h4{color:var(--amber-600);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.phase-tag{font-size:10px;font-weight:500;padding:2px 6px;border-radius:3px;letter-spacing:0.5px;text-transform:uppercase}
+.phase-planning{background:var(--blue-50);color:var(--blue-600)}
+.phase-design{background:var(--purple-50);color:var(--purple-800)}
+.phase-impl{background:var(--amber-50);color:var(--amber-600)}
+.phase-test{background:var(--teal-50);color:var(--teal-600)}
+.phase-qa{background:var(--coral-50);color:var(--coral-800)}
+.phase-deploy{background:var(--green-50);color:var(--green-800)}
+.risk-h{background:var(--red-50);color:var(--red-800)}
+.risk-m{background:var(--amber-50);color:var(--amber-600)}
+.risk-l{background:var(--green-50);color:var(--green-800)}
+.team-card{background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.team-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:500;font-size:13px}
+.timeline-row{display:flex;gap:0;margin-bottom:2px}
+.tl-label{width:120px;font-size:12px;color:var(--color-text-secondary);padding:6px 8px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-cell{flex:1;height:28px;border-right:0.5px solid var(--color-border-tertiary);position:relative}
+.tl-bar{position:absolute;top:4px;bottom:4px;border-radius:3px}
+.standup-box{background:var(--color-background-secondary,#f5f5f0);border-radius:8px;padding:12px 14px;margin-bottom:8px;border-left:3px solid var(--amber-200)}
+.standup-box h5{color:var(--amber-600);margin-bottom:6px;font-size:12px;text-transform:uppercase;letter-spacing:0.5px}
+.standup-box p,.standup-box li{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+ul.task-list{list-style:none;padding:0}
+ul.task-list li{padding:4px 0;font-size:12px;color:var(--color-text-secondary);display:flex;align-items:flex-start;gap:6px}
+ul.task-list li::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--amber-200);margin-top:6px;flex-shrink:0}
+.sp-box{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:20px;padding:0 6px;border-radius:4px;font-size:11px;font-weight:500;background:var(--blue-50);color:var(--blue-600)}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.dot-green{background:var(--teal-400)}
+.dot-amber{background:var(--amber-200)}
+.dot-red{background:var(--red-400)}
+.dot-gray{background:var(--gray-400)}
+.accord-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 14px;background:var(--color-background-secondary,#f5f5f0);border-radius:8px;margin-bottom:4px;user-select:none}
+.accord-header:hover{background:var(--color-background-primary)}
+.accord-body{padding:12px 14px 4px;display:none}
+.accord-body.open{display:block}
+.chart-wrap{position:relative;width:100%;height:220px;margin:12px 0}
+.info-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,0.07));font-size:12px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--color-text-secondary);min-width:130px;flex-shrink:0}
+.info-val{color:var(--color-text-primary);font-weight:500}
+.conflict-card{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid var(--coral-400)}
+.escalation-row{display:grid;grid-template-columns:60px 120px 1fr 120px;gap:8px;align-items:start;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.escalation-row:last-child{border-bottom:none}
+.budget-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.budget-bar-wrap .bname{font-size:12px;min-width:130px;color:var(--color-text-secondary)}
+.budget-bar-outer{flex:1;background:var(--gray-50);border-radius:99px;height:8px;overflow:hidden}
+.budget-bar-inner{height:100%;border-radius:99px}
+.budget-bar-wrap .bval{font-size:12px;min-width:52px;text-align:right;color:var(--color-text-secondary)}
+@media(max-width:640px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}.tl-label{width:90px}}
+</style>
+
+<h2 class="sr-only">Jio AWS Hyperscale Streaming Platform — TPM Master Playbook: Program charter, sprint playbooks, team structure, ceremonies, budget, velocity, risk register, and stakeholder communications for a 12-week, 6-sprint production deployment.</h2>
+
+<div id="nav-bar">
+  <button class="nav-btn active" data-target="s-dash"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</button>
+  <button class="nav-btn" data-target="s-charter"><i class="ti ti-file-description" aria-hidden="true"></i> Charter</button>
+  <button class="nav-btn" data-target="s-teams"><i class="ti ti-users" aria-hidden="true"></i> Teams</button>
+  <button class="nav-btn" data-target="s-calendar"><i class="ti ti-calendar" aria-hidden="true"></i> Calendar</button>
+  <button class="nav-btn" data-target="s-s1"><i class="ti ti-run" aria-hidden="true"></i> Sprint 1</button>
+  <button class="nav-btn" data-target="s-s2"><i class="ti ti-run" aria-hidden="true"></i> Sprint 2</button>
+  <button class="nav-btn" data-target="s-s3"><i class="ti ti-run" aria-hidden="true"></i> Sprint 3</button>
+  <button class="nav-btn" data-target="s-s4"><i class="ti ti-run" aria-hidden="true"></i> Sprint 4</button>
+  <button class="nav-btn" data-target="s-s5"><i class="ti ti-run" aria-hidden="true"></i> Sprint 5</button>
+  <button class="nav-btn" data-target="s-s6"><i class="ti ti-run" aria-hidden="true"></i> Sprint 6</button>
+  <button class="nav-btn" data-target="s-ceremonies"><i class="ti ti-messages" aria-hidden="true"></i> Ceremonies</button>
+  <button class="nav-btn" data-target="s-budget"><i class="ti ti-coin" aria-hidden="true"></i> Budget</button>
+  <button class="nav-btn" data-target="s-velocity"><i class="ti ti-trending-up" aria-hidden="true"></i> Velocity</button>
+  <button class="nav-btn" data-target="s-risk"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Risk</button>
+  <button class="nav-btn" data-target="s-comms"><i class="ti ti-broadcast" aria-hidden="true"></i> Comms</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ DASHBOARD ═══ -->
+<div id="s-dash" class="section active">
+  <div class="section-head"><h2>Program Dashboard</h2><span class="badge badge-teal"><i class="ti ti-check" aria-hidden="true"></i> On Track</span></div>
+  <div class="grid-4" style="margin-bottom:16px">
+    <div class="metric-card"><span class="lbl">Program Week</span><span class="val">1 / 12</span></div>
+    <div class="metric-card"><span class="lbl">Active Sprint</span><span class="val">S1</span></div>
+    <div class="metric-card"><span class="lbl">Budget Used</span><span class="val">$0</span></div>
+    <div class="metric-card"><span class="lbl">Team Capacity</span><span class="val">17</span></div>
+    <div class="metric-card"><span class="lbl">Story Points (Total)</span><span class="val">276</span></div>
+    <div class="metric-card"><span class="lbl">Velocity Target</span><span class="val">46 SP</span></div>
+    <div class="metric-card"><span class="lbl">AWS Phase</span><span class="val">Phase 0-2</span></div>
+    <div class="metric-card"><span class="lbl">Risk Items</span><span class="val">12</span></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:12px">Sprint Progress — S1: Foundation</h3>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--color-text-secondary)">Story Points Completed</span><span style="font-weight:500">0 / 40</span></div>
+        <div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--color-text-secondary)">Days Remaining</span><span style="font-weight:500">10 / 10</span></div>
+        <div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:var(--teal-200)"></div></div>
+      </div>
+      <table style="margin-top:10px">
+        <thead><tr><th>Phase</th><th>Status</th><th>Owner</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>Phase 0 — Pre-Setup</td><td><span class="status-dot dot-amber"></span> In Progress</td><td>Platform Lead</td><td>Day 2</td></tr>
+          <tr><td>Phase 1 — Networking</td><td><span class="status-dot dot-gray"></span> Not Started</td><td>Platform Lead</td><td>Day 5</td></tr>
+          <tr><td>Phase 2 — IAM</td><td><span class="status-dot dot-gray"></span> Not Started</td><td>Security Lead</td><td>Day 8</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:12px">Program Health</h3>
+      <div class="info-row"><span class="info-label"><i class="ti ti-server" aria-hidden="true"></i> Infrastructure</span><span class="badge badge-amber">Pre-Build</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-users" aria-hidden="true"></i> Team Staffing</span><span class="badge badge-teal">Fully Staffed</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-coin" aria-hidden="true"></i> Budget</span><span class="badge badge-teal">On Track</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Top Risk</span><span style="font-size:12px;color:var(--color-text-primary)">EKS cost overrun if cluster left running</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-flag" aria-hidden="true"></i> Next Milestone</span><span style="font-size:12px">VPC + IAM baseline — Week 1 Day 5</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-calendar-event" aria-hidden="true"></i> CTO Review</span><span style="font-size:12px">Week 4 — Sprint 2 Demo</span></div>
+      <div class="info-row"><span class="info-label"><i class="ti ti-rocket" aria-hidden="true"></i> Go-Live Target</span><span style="font-size:12px">End of Week 12 (Sprint 6)</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">12-Week Program Timeline — At a Glance</h3>
+    <table>
+      <thead><tr><th>Sprint</th><th>Weeks</th><th>AWS Phases</th><th>Goal</th><th>Key Deliverable</th><th>SP</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-blue">S1</span></td><td>1–2</td><td>0, 1, 2</td><td>Foundation</td><td>VPC, subnets, IAM roles, billing alarms live</td><td>40</td></tr>
+        <tr><td><span class="badge badge-amber">S2</span></td><td>3–4</td><td>3, 4</td><td>Compute &amp; Media</td><td>EKS (Minikube→AWS), CMAF stream playing in VLC</td><td>52</td></tr>
+        <tr><td><span class="badge badge-purple">S3</span></td><td>5–6</td><td>5, 6</td><td>Delivery &amp; Intelligence</td><td>CloudFront + Route 53, SageMaker AI pre-scaling</td><td>48</td></tr>
+        <tr><td><span class="badge badge-teal">S4</span></td><td>7–8</td><td>7, 8</td><td>Data &amp; Observability</td><td>DynamoDB + Kinesis + Redis + CloudWatch dashboard</td><td>44</td></tr>
+        <tr><td><span class="badge badge-coral">S5</span></td><td>9–10</td><td>9, 10</td><td>Security &amp; Resilience</td><td>WAF live, JMeter load test report, chaos pass</td><td>42</td></tr>
+        <tr><td><span class="badge badge-green">S6</span></td><td>11–12</td><td>11, 12</td><td>CI/CD &amp; Go-Live</td><td>CodePipeline, E2E validation, production sign-off</td><td>50</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ CHARTER ═══ -->
+<div id="s-charter" class="section">
+  <div class="section-head"><h2>Program Charter</h2><span class="badge badge-amber">Version 1.0</span></div>
+
+  <div class="card">
+    <h3>Executive Summary</h3>
+    <p style="margin-top:8px">This program builds a Jio-scale, production-ready live OTT streaming platform on AWS — capable of serving <strong style="color:var(--color-text-primary)">50M+ concurrent sessions at 76 Tbps</strong>. The architecture covers Multi-CDN fan-out, AI-assisted pre-scaling via SageMaker, CMAF low-latency encoding, graceful degradation under traffic storms, and full observability. Delivered by 17 engineers across 6 cross-functional teams over 12 weeks (6 × 2-week sprints), with a <strong style="color:var(--color-text-primary)">simulation-first</strong> approach to keep AWS costs under $300 during development.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:12px">Business Objectives</h3>
+      <ul class="task-list">
+        <li>Stream IPL-scale live events with &lt;4s glass-to-glass latency</li>
+        <li>Support 50M concurrent sessions without degradation</li>
+        <li>Zero-downtime during traffic storms via graceful degradation to S3 static fallback</li>
+        <li>AI-driven pre-scaling 30 min before event kick-off</li>
+        <li>Reduce CDN cost by 35% via intelligent multi-CDN routing</li>
+        <li>Achieve 99.99% uptime SLA for the streaming origin</li>
+        <li>Full CI/CD pipeline with &lt;15 min deployment cycle</li>
+        <li>Security-first: WAF, DDoS protection, least-privilege IAM</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px">Success Criteria (SLOs)</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>Target</th><th>Critical Threshold</th></tr></thead>
+        <tbody>
+          <tr><td>Stream latency (glass-to-glass)</td><td>&lt;4s</td><td>&lt;6s</td></tr>
+          <tr><td>Availability (monthly)</td><td>99.99%</td><td>99.9%</td></tr>
+          <tr><td>Startup time (time-to-first-frame)</td><td>&lt;2s</td><td>&lt;4s</td></tr>
+          <tr><td>5xx error rate</td><td>&lt;0.01%</td><td>&lt;0.1%</td></tr>
+          <tr><td>CDN cache hit rate</td><td>&gt;95%</td><td>&gt;90%</td></tr>
+          <tr><td>AI prediction accuracy</td><td>&gt;85%</td><td>&gt;75%</td></tr>
+          <tr><td>Deployment rollback time</td><td>&lt;5 min</td><td>&lt;15 min</td></tr>
+          <tr><td>AWS dev cost (total)</td><td>&lt;$300</td><td>&lt;$500</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Scope Definition</h3>
+    <div class="grid-2">
+      <div>
+        <h4 style="color:var(--teal-600);margin-bottom:8px"><i class="ti ti-check" aria-hidden="true"></i> In Scope</h4>
+        <ul class="task-list">
+          <li>VPC networking (6 subnets, 2 AZs, NAT Gateway)</li>
+          <li>IAM roles for EKS, Lambda@Edge, SageMaker, CodeBuild</li>
+          <li>EKS cluster (Minikube sim → AWS production)</li>
+          <li>CMAF video pipeline (FFmpeg sim → MediaLive + MediaPackage)</li>
+          <li>CloudFront multi-CDN + Lambda@Edge routing</li>
+          <li>Route 53 health checks + DNS failover</li>
+          <li>SageMaker AI traffic prediction model</li>
+          <li>DynamoDB (sessions + content metadata)</li>
+          <li>Kinesis Data Streams (viewer events)</li>
+          <li>ElastiCache Redis (session state)</li>
+          <li>CloudWatch dashboards + alarms + X-Ray tracing</li>
+          <li>WAF + Shield Standard + Secrets Manager</li>
+          <li>JMeter load test + chaos engineering validation</li>
+          <li>CodePipeline + CodeBuild + ECR CI/CD</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="color:var(--red-800);margin-bottom:8px"><i class="ti ti-x" aria-hidden="true"></i> Out of Scope</h4>
+        <ul class="task-list">
+          <li>VOD (Video on Demand) workflows</li>
+          <li>DRM (Digital Rights Management) integration</li>
+          <li>Multi-region AWS deployment (single region: ap-south-1)</li>
+          <li>Mobile application development (iOS/Android)</li>
+          <li>Billing and payment microservices</li>
+          <li>User authentication beyond demo session tokens</li>
+          <li>Real MediaLive channels in dev (FFmpeg sim used)</li>
+          <li>Production traffic (dev/staging only)</li>
+          <li>GDPR / data residency compliance</li>
+        </ul>
+        <h4 style="color:var(--amber-600);margin-top:12px;margin-bottom:8px"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Constraints</h4>
+        <ul class="task-list">
+          <li>AWS Free Tier limits govern dev environment usage</li>
+          <li>$5 billing alarm is a hard stop; EKS deleted after practice</li>
+          <li>All sensitive credentials via Secrets Manager only</li>
+          <li>Simulation-first: no MediaLive/EKS until Phase 3/4 AWS blocks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Architecture Decision Records (ADR Summary)</h3>
+    <table>
+      <thead><tr><th>ADR #</th><th>Decision</th><th>Chosen</th><th>Alternatives Considered</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>ADR-001</td><td>Container orchestration</td><td><span class="badge badge-blue">EKS / Kubernetes</span></td><td>ECS Fargate, Lambda</td><td>Industry standard; hybrid on-net capability</td></tr>
+        <tr><td>ADR-002</td><td>Video protocol</td><td><span class="badge badge-amber">CMAF (fMP4+HLS)</span></td><td>HLS-TS, MPEG-DASH</td><td>Lowest latency; universal device support</td></tr>
+        <tr><td>ADR-003</td><td>Scaling strategy</td><td><span class="badge badge-purple">AI Pre-Scale</span></td><td>Reactive HPA only</td><td>Reactive too slow for IPL-style traffic storms</td></tr>
+        <tr><td>ADR-004</td><td>CDN strategy</td><td><span class="badge badge-teal">Multi-CDN</span></td><td>Single CloudFront</td><td>Cost + latency via ISP-level routing</td></tr>
+        <tr><td>ADR-005</td><td>Database</td><td><span class="badge badge-blue">DynamoDB</span></td><td>RDS Aurora, Redis-only</td><td>Auto-scales; sub-1ms; serverless</td></tr>
+        <tr><td>ADR-006</td><td>Degradation strategy</td><td><span class="badge badge-amber">S3 Static Fallback</span></td><td>Queue + retry</td><td>Users see scores, not blank screen</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ TEAMS ═══ -->
+<div id="s-teams" class="section">
+  <div class="section-head"><h2>Team Structure &amp; RACI</h2></div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px">Cross-Functional Team Map</h3>
+    <div class="grid-3">
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--blue-50);color:var(--blue-600)">PL</div>
+          <div><h4>Platform Team</h4><span class="badge badge-blue">4 Engineers</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>Platform Lead</strong> — VPC, EKS, ALB, IAM architecture</li>
+          <li><strong>Cloud Architect I</strong> — Networking, security groups, subnets</li>
+          <li><strong>Cloud Architect II</strong> — EKS node groups, Helm charts</li>
+          <li><strong>Network Engineer</strong> — Route 53, Global Accelerator, NAT</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">Sprints 1, 2</span> <span class="tag">Phases 0–3</span></div>
+      </div>
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--amber-50);color:var(--amber-600)">ME</div>
+          <div><h4>Media Team</h4><span class="badge badge-amber">3 Engineers</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>Media Engineer Lead</strong> — MediaLive, FFmpeg pipeline</li>
+          <li><strong>Video Engineer</strong> — MediaPackage, CMAF, bitrate ladders</li>
+          <li><strong>Streaming QA</strong> — VLC validation, latency measurement, segment testing</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">Sprints 2, 3</span> <span class="tag">Phase 4</span></div>
+      </div>
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--purple-50);color:var(--purple-800)">DA</div>
+          <div><h4>Data &amp; AI Team</h4><span class="badge badge-purple">3 Engineers</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>Data Engineer Lead</strong> — DynamoDB, Kinesis, schema design</li>
+          <li><strong>ML Engineer</strong> — SageMaker model, training pipeline, endpoint</li>
+          <li><strong>Analytics Engineer</strong> — Kinesis consumer, ElastiCache Redis</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">Sprints 3, 4</span> <span class="tag">Phases 6, 7</span></div>
+      </div>
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--red-50);color:var(--red-800)">SE</div>
+          <div><h4>Security Team</h4><span class="badge badge-red">2 Engineers</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>Security Engineer Lead</strong> — WAF rules, Shield, Secrets Manager</li>
+          <li><strong>IAM Specialist</strong> — Least-privilege policies, OIDC, role review</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">All Sprints (review)</span> <span class="tag">Sprint 5 (lead)</span></div>
+      </div>
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--teal-50);color:var(--teal-600)">DO</div>
+          <div><h4>DevOps / SRE Team</h4><span class="badge badge-teal">3 Engineers</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>DevOps Lead</strong> — CodePipeline, CodeBuild, ECR</li>
+          <li><strong>SRE Engineer</strong> — CloudWatch, X-Ray, alarms, runbooks</li>
+          <li><strong>QA Automation</strong> — JMeter, chaos scripts, E2E test suite</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">Sprints 4–6</span> <span class="tag">Phases 8, 10, 11</span></div>
+      </div>
+      <div class="team-card">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="team-avatar" style="background:var(--coral-50);color:var(--coral-800)">TL</div>
+          <div><h4>TPM + Tech Lead</h4><span class="badge badge-coral">2 Leads</span></div>
+        </div>
+        <div class="divider"></div>
+        <ul class="task-list">
+          <li><strong>TPM (You)</strong> — Program management, stakeholder comms, ceremonies, risk, budget</li>
+          <li><strong>Technical Lead</strong> — Architecture decisions, cross-team technical alignment, code review standards</li>
+        </ul>
+        <div style="margin-top:8px"><span class="tag">All Sprints</span> <span class="tag">All Phases</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">RACI Matrix — Key Decisions</h3>
+    <div style="overflow-x:auto">
+    <table style="min-width:700px">
+      <thead><tr><th>Activity</th><th>TPM</th><th>Tech Lead</th><th>Platform</th><th>Media</th><th>Data/AI</th><th>Security</th><th>DevOps</th></tr></thead>
+      <tbody>
+        <tr><td>Architecture design (ADR)</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td></tr>
+        <tr><td>Sprint planning &amp; backlog</td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td></tr>
+        <tr><td>AWS account &amp; billing setup</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td></tr>
+        <tr><td>IAM policy creation</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td></tr>
+        <tr><td>EKS cluster provisioning</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td></tr>
+        <tr><td>CMAF pipeline config</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-teal">C</span></td></tr>
+        <tr><td>SageMaker model deployment</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-teal">C</span></td></tr>
+        <tr><td>Security review sign-off</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-gray">I</span></td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-gray">I</span></td></tr>
+        <tr><td>Production deployment approval</td><td><span class="badge badge-blue">R</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td></tr>
+        <tr><td>Incident response</td><td><span class="badge badge-amber">A</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-teal">C</span></td><td><span class="badge badge-blue">R</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="margin-top:8px"><strong style="color:var(--color-text-primary)">R</strong> = Responsible · <strong style="color:var(--color-text-primary)">A</strong> = Accountable · <strong style="color:var(--color-text-primary)">C</strong> = Consulted · <strong style="color:var(--color-text-primary)">I</strong> = Informed</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ CALENDAR ═══ -->
+<div id="s-calendar" class="section">
+  <div class="section-head"><h2>12-Week Program Calendar</h2></div>
+  <div class="card">
+    <h3 style="margin-bottom:14px">Sprint &amp; Phase Gantt View</h3>
+    <div style="overflow-x:auto">
+    <div style="min-width:680px">
+      <div class="timeline-row" style="margin-bottom:4px">
+        <div class="tl-label"></div>
+        <div style="flex:1;display:flex">
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk1</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk2</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk3</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk4</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk5</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk6</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk7</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk8</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk9</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk10</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);border-right:0.5px solid var(--color-border-tertiary);padding:4px 0">Wk11</div>
+          <div style="flex:1;text-align:center;font-size:11px;color:var(--color-text-secondary);padding:4px 0">Wk12</div>
+        </div>
+      </div>
+      <script>
+      function ganttRow(label, start, span, colorVar, rows){
+        let cells='';for(let i=0;i<12;i++){let style='';if(i>=start&&i<start+span){style=`background:${colorVar};border-radius:3px;left:${(i===start?2:0)}px;right:${(i===start+span-1?2:0)}px`;}cells+=`<div class="tl-cell"><div class="tl-bar" style="${style};top:4px;bottom:4px;${i>=start&&i<start+span?'left:2px;right:2px':''}"></div></div>`;}return`<div class="timeline-row"><div class="tl-label">${label}</div><div style="flex:1;display:flex">${cells}</div></div>`;}
+      </script>
+      <div id="gantt-rows"></div>
+    </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--blue-200);display:inline-block"></span>Sprint 1</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--amber-200);display:inline-block"></span>Sprint 2</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--purple-200);display:inline-block"></span>Sprint 3</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--teal-200);display:inline-block"></span>Sprint 4</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--coral-200,#F0997B);display:inline-block"></span>Sprint 5</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="width:12px;height:8px;border-radius:2px;background:var(--green-200);display:inline-block"></span>Sprint 6</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Key Ceremonies &amp; Milestones Calendar</h3>
+    <table>
+      <thead><tr><th>Week</th><th>Day</th><th>Event</th><th>Duration</th><th>Attendees</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Mon</td><td>🚀 Program Kickoff</td><td>3h</td><td>All Teams + Stakeholders</td><td>Charter signed, team working agreements, tools access confirmed</td></tr>
+        <tr><td>1</td><td>Mon–Fri</td><td>Daily Stand-up</td><td>15 min</td><td>All Teams</td><td>Progress, blockers, coordination</td></tr>
+        <tr><td>1</td><td>Wed</td><td>Architecture Review Board</td><td>1h</td><td>Tech Lead + Team Leads</td><td>ADR-001–006 baseline approved</td></tr>
+        <tr><td>2</td><td>Fri</td><td>Sprint 1 Review + Retro</td><td>1h+1h</td><td>All Teams</td><td>VPC/IAM demo, retro actions captured</td></tr>
+        <tr><td>3</td><td>Mon</td><td>Sprint 2 Planning</td><td>2h</td><td>All Teams</td><td>Backlog groomed, capacity set, 52 SP committed</td></tr>
+        <tr><td>4</td><td>Fri</td><td>Sprint 2 Review + CTO Demo</td><td>2h</td><td>All + CTO</td><td>CMAF stream demoed in VLC; EKS cluster shown</td></tr>
+        <tr><td>6</td><td>Fri</td><td>Sprint 3 Review</td><td>1h</td><td>All Teams</td><td>CloudFront live, SageMaker endpoint demo</td></tr>
+        <tr><td>8</td><td>Fri</td><td>Sprint 4 Review</td><td>1h</td><td>All Teams</td><td>CloudWatch dashboard demo, DynamoDB data verified</td></tr>
+        <tr><td>10</td><td>Fri</td><td>Sprint 5 Review + Security Sign-off</td><td>2h</td><td>All + Security Sponsor</td><td>WAF, load test results, chaos engineering report</td></tr>
+        <tr><td>12</td><td>Thu</td><td>Final E2E Demo + Go-Live Decision</td><td>3h</td><td>All + CTO + Stakeholders</td><td>Full platform demo; go/no-go decision</td></tr>
+        <tr><td>12</td><td>Fri</td><td>Program Retrospective</td><td>2h</td><td>All Teams</td><td>Lessons learned, ADR updates, runbook handover</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 1 ═══ -->
+<div id="s-s1" class="section">
+  <div class="section-head"><h2>Sprint 1 — Foundation</h2><span class="badge badge-blue">Weeks 1–2 · 40 SP · Phases 0, 1, 2</span></div>
+
+  <div class="card" style="border-left:3px solid var(--blue-200)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Establish the complete AWS account baseline: billing alarms, VPC networking (6 subnets, 2 AZs, Internet Gateway, NAT Gateway), security groups, and all IAM roles using least-privilege. Every subsequent phase depends on this foundation. Simulation and real AWS run in parallel.</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 1 Planning Meeting — Day 1, 09:00–11:00</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Agenda (2 hours)</h5>
+        <ul class="task-list">
+          <li><strong>09:00–09:20</strong> — TPM opens: program objectives, team working agreements, definition of done</li>
+          <li><strong>09:20–09:40</strong> — Tech Lead: architectural walkthrough of Phases 0–2, ADR review</li>
+          <li><strong>09:40–10:15</strong> — Backlog grooming: story pointing (Planning Poker), acceptance criteria per story</li>
+          <li><strong>10:15–10:40</strong> — Capacity planning: each engineer declares available hours (minus PTO, meetings)</li>
+          <li><strong>10:40–11:00</strong> — Sprint commitment: 40 SP confirmed, tasks assigned, sprint board updated in Jira</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Capacity Planning Table</h5>
+        <table>
+          <thead><tr><th>Team</th><th>Engineers</th><th>Hrs/Person</th><th>SP Capacity</th></tr></thead>
+          <tbody>
+            <tr><td>Platform</td><td>4</td><td>72</td><td>18</td></tr>
+            <tr><td>Security</td><td>2</td><td>72</td><td>8</td></tr>
+            <tr><td>TPM + TL</td><td>2</td><td>40</td><td>6</td></tr>
+            <tr><td>DevOps (review)</td><td>1</td><td>20</td><td>4</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>9 active</strong></td><td></td><td><strong>36 → buffer to 40</strong></td></tr>
+          </tbody>
+        </table>
+        <h5 style="margin-top:12px;margin-bottom:6px">Definition of Done — Sprint 1</h5>
+        <ul class="task-list">
+          <li>All AWS CLI commands executed without error</li>
+          <li>Billing alarm confirmed via email subscription</li>
+          <li>VPC, subnets, IGW, NAT created and tagged with Project=jio-capstone</li>
+          <li>All security groups created with documented inbound/outbound rules</li>
+          <li>All 5 IAM roles created; policies attached and validated via IAM Simulator</li>
+          <li>Terraform/CloudFormation state or CLI output saved to Git</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-design">Design</span> Technical Design Review — Day 1, 14:00–15:00</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Design Topics</h5>
+        <ul class="task-list">
+          <li><strong>Network topology</strong> — CIDR allocation: VPC 10.0.0.0/16, 6 × /24 subnets. Justify 2 AZs (cost vs 3 AZs)</li>
+          <li><strong>Subnet purpose segmentation</strong> — Public (ALB, NAT), Private (EKS nodes), Data (DynamoDB endpoints)</li>
+          <li><strong>NAT Gateway vs NAT Instance</strong> — Decision: use NAT Instance (t2.micro, free tier) for dev to avoid $0.045/hr NAT Gateway charge</li>
+          <li><strong>Security Group design</strong> — ALB-SG (80/443 inbound), EKS-SG (10.0.0.0/16 inbound), DB-SG (5432/6379 from EKS-SG only)</li>
+          <li><strong>IAM role boundary</strong> — EKS cluster role, EKS node role, Lambda@Edge role, SageMaker role, CodeBuild role. No wildcard (*) actions</li>
+          <li><strong>Tagging strategy</strong> — All resources: Project=jio-capstone, Environment=dev, Owner=TPM, ManagedBy=awscli</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Interface Contracts</h5>
+        <table>
+          <thead><tr><th>Contract</th><th>Producer</th><th>Consumer</th><th>Format</th></tr></thead>
+          <tbody>
+            <tr><td>VPC ID</td><td>Platform</td><td>All teams</td><td>Shell var / SSM Param</td></tr>
+            <tr><td>Subnet IDs (6)</td><td>Platform</td><td>EKS, ALB, RDS</td><td>Shell var / SSM Param</td></tr>
+            <tr><td>Security Group IDs</td><td>Platform</td><td>EKS, Lambda, SageMaker</td><td>Shell var / SSM Param</td></tr>
+            <tr><td>IAM Role ARNs</td><td>Security</td><td>All services</td><td>Secrets Manager / SSM</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;padding:10px;background:var(--amber-50);border-radius:6px">
+          <h5 style="color:var(--amber-600);margin-bottom:4px"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Critical Design Rule</h5>
+          <p style="color:var(--amber-800)">Store all VPC/subnet/SG IDs in AWS SSM Parameter Store after creation. Use <code style="font-size:11px;background:var(--amber-100);padding:1px 4px;border-radius:2px">aws ssm put-parameter</code> so cross-team scripts can resolve dynamically without hardcoded IDs in code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-impl">Implementation</span> Day-by-Day Execution Plan</h4>
+    <table>
+      <thead><tr><th>Day</th><th>Task</th><th>Owner</th><th>AWS Phase</th><th>SP</th><th>CLI Key Command</th></tr></thead>
+      <tbody>
+        <tr><td>D1 AM</td><td>Set $5 billing alarm, SNS topic, subscribe email</td><td>Platform Lead</td><td>Phase 0.3</td><td><span class="sp-box">3</span></td><td><code style="font-size:10px">aws cloudwatch put-metric-alarm --alarm-name billing-5</code></td></tr>
+        <tr><td>D1 PM</td><td>Configure AWS CLI, install eksctl/kubectl/helm/ffmpeg</td><td>All Leads</td><td>Phase 0.2</td><td><span class="sp-box">2</span></td><td><code style="font-size:10px">aws configure; for tool in aws eksctl kubectl helm ffmpeg</code></td></tr>
+        <tr><td>D2</td><td>Create project directory, .env variables, cost allocation tags</td><td>Platform Lead</td><td>Phase 0.1</td><td><span class="sp-box">2</span></td><td><code style="font-size:10px">mkdir -p jio-aws-capstone/; source .env</code></td></tr>
+        <tr><td>D3 AM</td><td>Create VPC, enable DNS hostnames, attach Internet Gateway</td><td>Cloud Arch I</td><td>Phase 1.2</td><td><span class="sp-box">5</span></td><td><code style="font-size:10px">aws ec2 create-vpc --cidr-block 10.0.0.0/16</code></td></tr>
+        <tr><td>D3 PM</td><td>Create 6 subnets (2 public, 2 private, 2 data) across 2 AZs</td><td>Cloud Arch I</td><td>Phase 1.3</td><td><span class="sp-box">5</span></td><td><code style="font-size:10px">aws ec2 create-subnet --cidr-block 10.0.1.0/24 --availability-zone ap-south-1a</code></td></tr>
+        <tr><td>D4 AM</td><td>Create NAT Instance (t2.micro), route tables, associations</td><td>Network Eng</td><td>Phase 1.4</td><td><span class="sp-box">5</span></td><td><code style="font-size:10px">aws ec2 create-route-table; aws ec2 associate-route-table</code></td></tr>
+        <tr><td>D4 PM</td><td>Create 3 security groups with inbound/outbound rules documented</td><td>Cloud Arch II</td><td>Phase 1.5</td><td><span class="sp-box">5</span></td><td><code style="font-size:10px">aws ec2 create-security-group --group-name alb-sg</code></td></tr>
+        <tr><td>D5</td><td>Store all resource IDs in SSM Parameter Store; tag all resources</td><td>Platform Lead</td><td>Phase 1</td><td><span class="sp-box">3</span></td><td><code style="font-size:10px">aws ssm put-parameter --name /jio/vpc-id --value $VPC_ID</code></td></tr>
+        <tr><td>D6</td><td>Create EKS cluster IAM role + node group role</td><td>Security Lead</td><td>Phase 2.1</td><td><span class="sp-box">4</span></td><td><code style="font-size:10px">aws iam create-role --role-name jio-capstone-eks-cluster-role</code></td></tr>
+        <tr><td>D7</td><td>Create Lambda@Edge, SageMaker, streaming app IAM roles</td><td>IAM Specialist</td><td>Phase 2.2</td><td><span class="sp-box">3</span></td><td><code style="font-size:10px">aws iam create-role --role-name jio-capstone-lambda-edge-role</code></td></tr>
+        <tr><td>D8</td><td>Create CodeBuild role; attach all policies; IAM Simulator validation</td><td>IAM Specialist</td><td>Phase 2.3</td><td><span class="sp-box">3</span></td><td><code style="font-size:10px">aws iam simulate-principal-policy --action-names s3:GetObject</code></td></tr>
+        <tr><td>D9</td><td>SIM: Minikube 3-node cluster setup and pod deployment test</td><td>Platform Lead</td><td>Phase 3 SIM</td><td><span class="sp-box">3</span></td><td><code style="font-size:10px">minikube start --nodes 3 --driver docker</code></td></tr>
+        <tr><td>D10</td><td>Sprint review prep, E2E validation script (Phase 12.1), demo</td><td>TPM</td><td>Phase 12.1</td><td><span class="sp-box">2</span></td><td><code style="font-size:10px">bash 12-cleanup/e2e-validate.sh</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-test">Testing</span> Test Plan — Sprint 1</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Test Cases</h5>
+        <ul class="task-list">
+          <li><strong>TC-001</strong> VPC created with correct CIDR 10.0.0.0/16 and DNS enabled → <code style="font-size:11px">aws ec2 describe-vpcs</code></li>
+          <li><strong>TC-002</strong> All 6 subnets exist across 2 AZs; no CIDR overlaps → <code style="font-size:11px">aws ec2 describe-subnets</code></li>
+          <li><strong>TC-003</strong> Internet Gateway attached to VPC; public route table has 0.0.0.0/0 → IGW route → verify routing</li>
+          <li><strong>TC-004</strong> NAT Instance running; private route table has 0.0.0.0/0 → NAT ENI</li>
+          <li><strong>TC-005</strong> ALB-SG allows 80/443 inbound; EKS-SG allows 10.0.0.0/16 only; DB-SG rejects internet traffic</li>
+          <li><strong>TC-006</strong> IAM Simulator: EKS cluster role can describe-clusters, cannot s3:DeleteBucket</li>
+          <li><strong>TC-007</strong> Billing alarm in CloudWatch is in ALARM state at &gt;$5 (test via manual threshold)</li>
+          <li><strong>TC-008</strong> All resources tagged Project=jio-capstone → <code style="font-size:11px">aws resourcegroupstaggingapi get-resources</code></li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Testing Checklist</h5>
+        <table>
+          <thead><tr><th>Type</th><th>Approach</th><th>Pass Criteria</th></tr></thead>
+          <tbody>
+            <tr><td>Unit</td><td>IAM policy simulator per role</td><td>All actions as per least-privilege spec</td></tr>
+            <tr><td>Integration</td><td>EC2 t2.micro in private subnet; verify outbound via NAT</td><td>Can reach api.aws.amazon.com</td></tr>
+            <tr><td>Security</td><td>Port scan ALB-SG from outside VPC CIDR</td><td>Only 80, 443 accessible</td></tr>
+            <tr><td>Cost</td><td>AWS Cost Explorer 24h after setup</td><td>Charges &lt;$1 (only NAT Instance t2.micro)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-qa">QA Gates</span> Acceptance Criteria &amp; Sign-off</h4>
+    <table>
+      <thead><tr><th>Gate</th><th>Criterion</th><th>Validated By</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>QA-G1</td><td>Billing alarm triggers SNS email before $5 charge threshold</td><td>Platform Lead + TPM</td><td><span class="badge badge-gray">Pending</span></td></tr>
+        <tr><td>QA-G2</td><td>All 6 subnets available, tagged, correct CIDR</td><td>Cloud Arch I + Security</td><td><span class="badge badge-gray">Pending</span></td></tr>
+        <tr><td>QA-G3</td><td>IAM Simulator validates all 5 roles per least-privilege spec</td><td>IAM Specialist + Tech Lead</td><td><span class="badge badge-gray">Pending</span></td></tr>
+        <tr><td>QA-G4</td><td>Minikube 3-node cluster starts; test pod runs successfully</td><td>Platform Lead</td><td><span class="badge badge-gray">Pending</span></td></tr>
+        <tr><td>QA-G5</td><td>All resource IDs stored in SSM Parameter Store; readable by other accounts</td><td>TPM</td><td><span class="badge badge-gray">Pending</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-deploy">Deployment</span> Sprint 1 — No Production Deployment (Foundation Only)</h4>
+    <p style="font-size:12px">Sprint 1 establishes dev/staging baseline only. All resources are in ap-south-1 dev environment. Teardown script is validated and ready. No production traffic is expected. Sprint 2 will introduce EKS and media pipeline into the validated network.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 2 ═══ -->
+<div id="s-s2" class="section">
+  <div class="section-head"><h2>Sprint 2 — Compute &amp; Media Pipeline</h2><span class="badge badge-amber">Weeks 3–4 · 52 SP · Phases 3, 4</span></div>
+
+  <div class="card" style="border-left:3px solid var(--amber-200)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Deploy a working Kubernetes cluster (Minikube sim → real EKS) and a functional CMAF live stream. By end of Sprint 2, the team can open VLC, enter a URL, and watch a live HLS stream generated by the pipeline. The CTO demo is on Day 10 (Week 4 Friday).</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 2 Planning — Day 1, 09:00–11:00</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Backlog Items (Sprint 2)</h5>
+        <table>
+          <thead><tr><th>Story ID</th><th>Story</th><th>SP</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr><td>S2-01</td><td>[SIM] Minikube 3-node cluster, test app deployment</td><td><span class="sp-box">5</span></td><td>Platform Lead</td></tr>
+            <tr><td>S2-02</td><td>[SIM] FFmpeg RTMP → CMAF 4-bitrate HLS output</td><td><span class="sp-box">8</span></td><td>Media Lead</td></tr>
+            <tr><td>S2-03</td><td>[SIM] Python HTTP server serving .m3u8 (plays in VLC)</td><td><span class="sp-box">3</span></td><td>Video Eng</td></tr>
+            <tr><td>S2-04</td><td>[AWS] EKS cluster eksctl create with Spot nodegroup</td><td><span class="sp-box">8</span></td><td>Platform Lead</td></tr>
+            <tr><td>S2-05</td><td>[AWS] EKS On-Demand nodegroup for critical services</td><td><span class="sp-box">5</span></td><td>Cloud Arch II</td></tr>
+            <tr><td>S2-06</td><td>[AWS] S3 bucket creation, CORS, static website hosting</td><td><span class="sp-box">3</span></td><td>DevOps SRE</td></tr>
+            <tr><td>S2-07</td><td>[AWS] Upload CMAF segments to S3; validate signed URL access</td><td><span class="sp-box">5</span></td><td>Video Eng</td></tr>
+            <tr><td>S2-08</td><td>EKS: Deploy nginx ingress + streaming app helm chart</td><td><span class="sp-box">5</span></td><td>Platform Lead</td></tr>
+            <tr><td>S2-09</td><td>ALB Ingress Controller: path routing /stream/* to media pods</td><td><span class="sp-box">5</span></td><td>Cloud Arch I</td></tr>
+            <tr><td>S2-10</td><td>CTO demo prep: E2E validation, runbook, slide deck</td><td><span class="sp-box">3</span></td><td>TPM</td></tr>
+            <tr><td>S2-11</td><td>Sprint retro + teardown EKS (cost control)</td><td><span class="sp-box">2</span></td><td>Platform Lead</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Capacity Planning</h5>
+        <table>
+          <thead><tr><th>Team</th><th>Engineers</th><th>SP Capacity</th></tr></thead>
+          <tbody>
+            <tr><td>Platform</td><td>4</td><td>22</td></tr>
+            <tr><td>Media</td><td>3</td><td>16</td></tr>
+            <tr><td>DevOps</td><td>2</td><td>8</td></tr>
+            <tr><td>TPM + TL</td><td>2</td><td>6</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>11</strong></td><td><strong>52</strong></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;padding:10px;background:var(--red-50);border-radius:6px">
+          <h5 style="color:var(--red-800);margin-bottom:4px"><i class="ti ti-coin" aria-hidden="true"></i> Cost Watch: EKS</h5>
+          <p style="color:var(--red-800);font-size:12px">EKS costs <strong>$0.10/hr cluster fee</strong> plus EC2 node costs. Create cluster only when practicing (S2-04). Delete immediately after CTO demo via teardown script. Budget: ≤3 hours EKS runtime = ≤$0.30 cluster fee + ~$0.20 EC2 = ≤$0.50 total for Sprint 2 AWS work.</p>
+        </div>
+        <div style="margin-top:8px;padding:10px;background:var(--amber-50);border-radius:6px">
+          <h5 style="color:var(--amber-600);margin-bottom:4px"><i class="ti ti-video" aria-hidden="true"></i> No MediaLive in Dev</h5>
+          <p style="color:var(--amber-800);font-size:12px">MediaLive costs ~$15/channel/hr. Use FFmpeg simulation (S2-02) throughout development. MediaLive config JSON is authored for review, but never activated.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-design">Design</span> CMAF Pipeline Architecture Review — Day 1, 14:00–15:30</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">CMAF Bitrate Ladder</h5>
+        <table>
+          <thead><tr><th>Profile</th><th>Resolution</th><th>Bitrate</th><th>Codec</th><th>Segment</th></tr></thead>
+          <tbody>
+            <tr><td>4K HDR</td><td>3840×2160</td><td>15 Mbps</td><td>H.265</td><td>2s CMAF</td></tr>
+            <tr><td>1080p</td><td>1920×1080</td><td>8 Mbps</td><td>H.264</td><td>2s CMAF</td></tr>
+            <tr><td>720p</td><td>1280×720</td><td>4 Mbps</td><td>H.264</td><td>2s CMAF</td></tr>
+            <tr><td>480p (ABR)</td><td>854×480</td><td>1.5 Mbps</td><td>H.264</td><td>2s CMAF</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">EKS Node Group Strategy</h5>
+        <table>
+          <thead><tr><th>Node Group</th><th>Instance</th><th>Count</th><th>Workload</th></tr></thead>
+          <tbody>
+            <tr><td>On-Demand (critical)</td><td>t3.medium</td><td>2</td><td>Auth, session, origin</td></tr>
+            <tr><td>Spot (non-critical)</td><td>t3.medium</td><td>3 (0→10)</td><td>Analytics, recommendations</td></tr>
+          </tbody>
+        </table>
+        <h5 style="margin-top:10px;margin-bottom:6px">HPA (Horizontal Pod Autoscaler) Config</h5>
+        <ul class="task-list">
+          <li>Target CPU: 70% across all pods</li>
+          <li>Min replicas: 2 (critical), 1 (analytics)</li>
+          <li>Max replicas: 20 (critical), 50 (analytics)</li>
+          <li>Scale-up: immediate; Scale-down: 3-min stabilization window</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-impl">Implementation</span> Day-by-Day — Sprint 2</h4>
+    <table>
+      <thead><tr><th>Day</th><th>Task</th><th>Owner</th><th>SP</th><th>Key Verification</th></tr></thead>
+      <tbody>
+        <tr><td>D1</td><td>[SIM] Minikube start --nodes 3; deploy nginx pod; test pod-to-pod comms</td><td>Platform Lead</td><td><span class="sp-box">5</span></td><td><code style="font-size:10px">kubectl get pods -A</code> all Running</td></tr>
+        <tr><td>D2</td><td>[SIM] FFmpeg RTMP source → 4 bitrate HLS output → local HTTP server</td><td>Media Lead</td><td><span class="sp-box">8</span></td><td>VLC opens http://localhost:8080/master.m3u8</td></tr>
+        <tr><td>D3</td><td>[SIM] ffmpeg -re -i test.mp4 -c:v libx264 -f hls output; validate segments</td><td>Video Eng</td><td><span class="sp-box">3</span></td><td>.ts segments present; EXT-X-VERSION:6</td></tr>
+        <tr><td>D4</td><td>[AWS] eksctl create cluster jio-streaming-cluster with OIDC + Spot nodegroup</td><td>Platform Lead</td><td><span class="sp-box">8</span></td><td><code style="font-size:10px">kubectl get nodes</code> 5 nodes Ready</td></tr>
+        <tr><td>D5</td><td>[AWS] S3 bucket + CORS; upload CMAF segments; presigned URL test</td><td>DevOps SRE</td><td><span class="sp-box">5</span></td><td>curl -o /dev/null -w "%{http_code}" presigned_url = 200</td></tr>
+        <tr><td>D6</td><td>Deploy nginx ingress controller; create streaming app helm chart</td><td>Cloud Arch II</td><td><span class="sp-box">5</span></td><td>helm status jio-streaming = deployed</td></tr>
+        <tr><td>D7</td><td>ALB ingress: path /stream/* routes to media pods; /health returns 200</td><td>Cloud Arch I</td><td><span class="sp-box">5</span></td><td>curl ALB DNS /health HTTP 200</td></tr>
+        <tr><td>D8</td><td>Integration test: JMeter 100 virtual users hitting /stream/master.m3u8</td><td>QA Automation</td><td><span class="sp-box">3</span></td><td>&lt;5% error rate; avg response &lt;500ms</td></tr>
+        <tr><td>D9</td><td>CTO demo prep; runbook written; E2E validation script executed</td><td>TPM + TL</td><td><span class="sp-box">3</span></td><td>All 8 E2E checks green</td></tr>
+        <tr><td>D10</td><td>CTO Demo (2h); EKS teardown post-demo; sprint retro</td><td>TPM</td><td><span class="sp-box">2</span></td><td>EKS deleted within 30 min of demo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-test">Testing</span> Media Pipeline Testing</h4>
+    <ul class="task-list">
+      <li><strong>TC-101</strong> FFmpeg starts with 0 dropped frames on test.mp4 input at 30fps</li>
+      <li><strong>TC-102</strong> All 4 bitrate renditions play without buffering in VLC for 60 seconds</li>
+      <li><strong>TC-103</strong> ABR switching: throttle network to 2 Mbps → player switches to 480p within 3 segments</li>
+      <li><strong>TC-104</strong> EKS pod autoscaling: inject 500 concurrent requests → replicas scale from 2 to 8 within 90 seconds</li>
+      <li><strong>TC-105</strong> Spot instance interruption simulation: drain 1 Spot node → no pod downtime (rescheduled to On-Demand)</li>
+      <li><strong>TC-106</strong> S3 presigned URL expires after configured TTL (default 3600s) → 403 after expiry</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 3 ═══ -->
+<div id="s-s3" class="section">
+  <div class="section-head"><h2>Sprint 3 — Delivery &amp; Intelligence</h2><span class="badge badge-purple">Weeks 5–6 · 48 SP · Phases 5, 6</span></div>
+
+  <div class="card" style="border-left:3px solid var(--purple-200)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Deploy CloudFront distribution with Lambda@Edge multi-CDN routing, Route 53 health checks for failover, and a working SageMaker AI pre-scaling endpoint. By end of Sprint 3, Lambda@Edge correctly routes video streams vs scoreboards, and the SageMaker model returns traffic predictions for a simulated event.</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 3 Backlog</h4>
+    <table>
+      <thead><tr><th>Story ID</th><th>Story</th><th>SP</th><th>Team</th></tr></thead>
+      <tbody>
+        <tr><td>S3-01</td><td>CloudFront distribution with OAI to S3 origin</td><td><span class="sp-box">5</span></td><td>Platform</td></tr>
+        <tr><td>S3-02</td><td>Lambda@Edge function: CDN routing logic (video → CF primary, scores → S3)</td><td><span class="sp-box">8</span></td><td>Media + Platform</td></tr>
+        <tr><td>S3-03</td><td>S3 static fallback: pre-cache scoreboard PNGs, promo JPEGs</td><td><span class="sp-box">3</span></td><td>Media</td></tr>
+        <tr><td>S3-04</td><td>CloudFront origin failover group: primary MediaPackage → secondary S3</td><td><span class="sp-box">5</span></td><td>Platform</td></tr>
+        <tr><td>S3-05</td><td>Route 53 hosted zone, A records, latency routing policy</td><td><span class="sp-box">3</span></td><td>Network Eng</td></tr>
+        <tr><td>S3-06</td><td>Route 53 health checks + DNS failover (primary/secondary)</td><td><span class="sp-box">5</span></td><td>Network Eng</td></tr>
+        <tr><td>S3-07</td><td>[SIM] Python scikit-learn AI model: predict concurrent viewers for time T</td><td><span class="sp-box">8</span></td><td>ML Eng</td></tr>
+        <tr><td>S3-08</td><td>[AWS] SageMaker endpoint deployment for traffic prediction</td><td><span class="sp-box">5</span></td><td>ML Eng</td></tr>
+        <tr><td>S3-09</td><td>SSM Parameter: SageMaker model output → EKS HPA pre-scale trigger</td><td><span class="sp-box">3</span></td><td>ML Eng + Platform</td></tr>
+        <tr><td>S3-10</td><td>Signed URL generation for CloudFront + TTL validation tests</td><td><span class="sp-box">3</span></td><td>Security</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-design">Design</span> Multi-CDN Architecture + AI Pre-Scale Logic</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Lambda@Edge Routing Logic</h5>
+        <div style="background:var(--gray-50);border-radius:6px;padding:10px;font-size:11px;font-family:var(--font-mono,monospace);color:var(--color-text-primary)">
+          <div style="color:var(--gray-600);margin-bottom:4px">// CloudFront Viewer Request trigger</div>
+          <div>if (uri.startsWith('/stream/')) → route to</div>
+          <div style="padding-left:12px">primary CDN (CloudFront, high-perf)</div>
+          <div>if (uri.startsWith('/score/') ||</div>
+          <div style="padding-left:12px">uri.startsWith('/promo/')) → route to</div>
+          <div style="padding-left:12px">secondary CDN (S3 direct, cost-optimized)</div>
+          <div>on 5xx from origin → serve</div>
+          <div style="padding-left:12px">S3 static fallback asset</div>
+        </div>
+        <h5 style="margin-top:12px;margin-bottom:6px">AI Pre-Scale Workflow</h5>
+        <ul class="task-list">
+          <li><strong>T-30 min</strong> before event: SageMaker model invoked with scheduled event data</li>
+          <li>Model predicts concurrent viewer count (historical IPL data + time-of-day features)</li>
+          <li>Prediction written to SSM Parameter: /jio/expected-viewers</li>
+          <li>EKS HPA reads parameter; pre-scales to required replicas</li>
+          <li><strong>TPM manual gate</strong>: TPM must approve scale-up before execution</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">SageMaker Model Specification</h5>
+        <table>
+          <thead><tr><th>Attribute</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Algorithm</td><td>RandomForestRegressor (scikit-learn)</td></tr>
+            <tr><td>Input features</td><td>hour_of_day, day_of_week, match_type, historical_peak</td></tr>
+            <tr><td>Output</td><td>predicted_concurrent_viewers (integer)</td></tr>
+            <tr><td>Training data</td><td>Synthetic IPL viewer data (3 seasons)</td></tr>
+            <tr><td>Accuracy target</td><td>MAE &lt;2M viewers on 50M peak</td></tr>
+            <tr><td>Inference latency</td><td>&lt;200ms per call</td></tr>
+            <tr><td>SageMaker instance</td><td>ml.t2.medium (SageMaker free trial)</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;padding:10px;background:var(--purple-50);border-radius:6px">
+          <h5 style="color:var(--purple-800);margin-bottom:4px">Free Tier Note</h5>
+          <p style="color:var(--purple-800);font-size:12px">SageMaker has a 2-month free trial: 250 hrs Studio + 25 hrs training + 125 hrs inference on ml.t2.medium. Stay within this. Delete endpoint when not testing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-test">Testing</span> CDN + AI Validation Tests</h4>
+    <ul class="task-list">
+      <li><strong>TC-201</strong> CloudFront URL serves master.m3u8; response has X-Cache: Hit from cloudfront header within 2 requests</li>
+      <li><strong>TC-202</strong> Lambda@Edge: request /score/live.png returns from S3 (X-Amz-Cf-Id header present; no MediaPackage origin hit)</li>
+      <li><strong>TC-203</strong> Origin failover: delete S3 test object → CloudFront returns 200 from fallback origin within 3 retries</li>
+      <li><strong>TC-204</strong> Route 53 health check fails when origin URL returns 503 → failover to secondary record within 30s</li>
+      <li><strong>TC-205</strong> SageMaker endpoint: invoke with {"hour":20,"day":6,"match":"final","historical_peak":48000000} → prediction &gt;40M</li>
+      <li><strong>TC-206</strong> Signed CloudFront URL expires after configured TTL; request after TTL returns HTTP 403</li>
+      <li><strong>TC-207</strong> EKS HPA reads SSM prediction parameter; replica count increases from 2 to predicted value within 5 min</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 4 ═══ -->
+<div id="s-s4" class="section">
+  <div class="section-head"><h2>Sprint 4 — Data &amp; Observability</h2><span class="badge badge-teal">Weeks 7–8 · 44 SP · Phases 7, 8</span></div>
+
+  <div class="card" style="border-left:3px solid var(--teal-200)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Build the complete data layer (DynamoDB tables for sessions and content, Kinesis stream for viewer events, ElastiCache Redis for session state) and full observability stack (CloudWatch dashboard with 3 critical alarms, X-Ray distributed tracing). By end of Sprint 4, the CloudWatch dashboard shows real-time stream metrics.</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 4 Backlog</h4>
+    <table>
+      <thead><tr><th>Story ID</th><th>Story</th><th>SP</th><th>Team</th></tr></thead>
+      <tbody>
+        <tr><td>S4-01</td><td>DynamoDB: sessions table (session_id PK, TTL, GSI on user_id)</td><td><span class="sp-box">5</span></td><td>Data Lead</td></tr>
+        <tr><td>S4-02</td><td>DynamoDB: content metadata table (content_id PK, event_id SK)</td><td><span class="sp-box">3</span></td><td>Data Lead</td></tr>
+        <tr><td>S4-03</td><td>Kinesis Data Stream: 1 shard (free tier), retention 24h, consumer app</td><td><span class="sp-box">5</span></td><td>Analytics Eng</td></tr>
+        <tr><td>S4-04</td><td>Kinesis producer: viewer event simulator (1000 events/sec synthetic)</td><td><span class="sp-box">5</span></td><td>Analytics Eng</td></tr>
+        <tr><td>S4-05</td><td>[SIM] Docker Redis 7.0 container for session cache</td><td><span class="sp-box">3</span></td><td>Analytics Eng</td></tr>
+        <tr><td>S4-06</td><td>CloudWatch dashboard: 5xx rate, EKS CPU, Kinesis lag, stream latency</td><td><span class="sp-box">5</span></td><td>SRE Eng</td></tr>
+        <tr><td>S4-07</td><td>CloudWatch alarm: 5xx &gt;0.1% → SNS; EKS CPU &gt;80% → SNS; Kinesis lag &gt;60s → SNS</td><td><span class="sp-box">5</span></td><td>SRE Eng</td></tr>
+        <tr><td>S4-08</td><td>X-Ray: enable tracing on Lambda@Edge and EKS pods; sampling rules</td><td><span class="sp-box">5</span></td><td>SRE Eng</td></tr>
+        <tr><td>S4-09</td><td>DynamoDB DAX cluster evaluation (latency test: with/without cache)</td><td><span class="sp-box">3</span></td><td>Data Lead</td></tr>
+        <tr><td>S4-10</td><td>Runbook: DynamoDB table restore, Kinesis replay, Redis flush procedures</td><td><span class="sp-box">3</span></td><td>SRE Eng</td></tr>
+        <tr><td>S4-11</td><td>Sprint review + dashboard demo to stakeholders</td><td><span class="sp-box">2</span></td><td>TPM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-design">Design</span> Data Schema + CloudWatch Architecture</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">DynamoDB Session Table Schema</h5>
+        <table>
+          <thead><tr><th>Attribute</th><th>Type</th><th>Key</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>session_id</td><td>String</td><td>PK</td><td>UUID v4</td></tr>
+            <tr><td>user_id</td><td>String</td><td>GSI PK</td><td>Jio UID</td></tr>
+            <tr><td>content_id</td><td>String</td><td></td><td>Current stream</td></tr>
+            <tr><td>bitrate</td><td>Number</td><td></td><td>Current kbps</td></tr>
+            <tr><td>device_type</td><td>String</td><td></td><td>mobile/tv/web</td></tr>
+            <tr><td>started_at</td><td>Number</td><td></td><td>Unix timestamp</td></tr>
+            <tr><td>ttl</td><td>Number</td><td></td><td>Auto-expire 4h</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">CloudWatch Alarm Matrix</h5>
+        <table>
+          <thead><tr><th>Alarm</th><th>Metric</th><th>Threshold</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>5xx-spike</td><td>ALB 5xxCount/req</td><td>&gt;0.1% for 5 min</td><td>SNS → PagerDuty</td></tr>
+            <tr><td>EKS-CPU-high</td><td>Pod CPU avg</td><td>&gt;80% for 3 min</td><td>SNS → Slack</td></tr>
+            <tr><td>Kinesis-lag</td><td>GetRecords.IteratorAgeMillis</td><td>&gt;60000ms</td><td>SNS → Slack</td></tr>
+            <tr><td>Stream-latency</td><td>Custom metric from Lambda@Edge</td><td>&gt;6s</td><td>SNS → PagerDuty</td></tr>
+            <tr><td>Billing-limit</td><td>AWS/Billing EstimatedCharges</td><td>&gt;$5</td><td>SNS → TPM email</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-test">Testing</span> Data &amp; Observability Tests</h4>
+    <ul class="task-list">
+      <li><strong>TC-301</strong> DynamoDB: write session record; read back with consistent read; verify TTL expiry at T+4h (use DynamoDB TTL test mode)</li>
+      <li><strong>TC-302</strong> Kinesis: produce 10,000 synthetic viewer events; consumer reads all within 5s; no data loss</li>
+      <li><strong>TC-303</strong> Redis: SET session:test "value"; GET session:test = "value"; verify PEXPIREAT works for session TTL</li>
+      <li><strong>TC-304</strong> CloudWatch alarm: simulate 5xx spike via ALB weighted routing to error target → alarm enters ALARM state within 5 min</li>
+      <li><strong>TC-305</strong> X-Ray service map shows Lambda@Edge → CloudFront → ALB → EKS pod trace chain; no broken segments</li>
+      <li><strong>TC-306</strong> DynamoDB: 1000 concurrent reads via parallel workers → avg latency &lt;1ms (validates free tier 25 RCU adequacy)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 5 ═══ -->
+<div id="s-s5" class="section">
+  <div class="section-head"><h2>Sprint 5 — Security &amp; Resilience</h2><span class="badge badge-coral">Weeks 9–10 · 42 SP · Phases 9, 10</span></div>
+
+  <div class="card" style="border-left:3px solid var(--coral-400)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Lock down the platform with production-grade security (WAF rules, Shield Standard, Secrets Manager rotation) and prove resilience under load. By end of Sprint 5: WAF blocks a SQL injection test request; JMeter 1000-user load test passes; chaos engineering (origin kill) demonstrates graceful S3 fallback.</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 5 Backlog</h4>
+    <table>
+      <thead><tr><th>Story ID</th><th>Story</th><th>SP</th><th>Team</th></tr></thead>
+      <tbody>
+        <tr><td>S5-01</td><td>WAF WebACL: create with AWS managed rules (CommonRuleSet, AmazonIpReputationList)</td><td><span class="sp-box">5</span></td><td>Security Lead</td></tr>
+        <tr><td>S5-02</td><td>WAF: custom rate-limit rule (1000 req/5min per IP) + SQL injection rule</td><td><span class="sp-box">5</span></td><td>Security Lead</td></tr>
+        <tr><td>S5-03</td><td>Associate WAF WebACL with CloudFront distribution</td><td><span class="sp-box">3</span></td><td>Security Lead</td></tr>
+        <tr><td>S5-04</td><td>Shield Standard: verify enabled on CloudFront + Route 53 (auto-enabled)</td><td><span class="sp-box">2</span></td><td>Security Lead</td></tr>
+        <tr><td>S5-05</td><td>Secrets Manager: store DB credentials; enable 30-day rotation; Lambda rotation function</td><td><span class="sp-box">5</span></td><td>IAM Specialist</td></tr>
+        <tr><td>S5-06</td><td>JMeter: 1000 virtual users, 10-min ramp-up, hitting /stream/master.m3u8</td><td><span class="sp-box">8</span></td><td>QA Automation</td></tr>
+        <tr><td>S5-07</td><td>Chaos: kill MediaPackage origin (simulate) → verify Lambda@Edge returns S3 fallback</td><td><span class="sp-box">5</span></td><td>QA Automation</td></tr>
+        <tr><td>S5-08</td><td>Chaos: drain 50% EKS Spot nodes → verify On-Demand nodes absorb traffic</td><td><span class="sp-box">5</span></td><td>Platform + QA</td></tr>
+        <tr><td>S5-09</td><td>Security review: full IAM policy audit; remove overpermissive policies found</td><td><span class="sp-box">2</span></td><td>IAM Specialist</td></tr>
+        <tr><td>S5-10</td><td>Load test report: document results, p50/p95/p99 latency, error rate, throughput</td><td><span class="sp-box">2</span></td><td>TPM + QA</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-design">Design</span> Security Architecture &amp; Chaos Engineering Plan</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">WAF Rule Hierarchy</h5>
+        <table>
+          <thead><tr><th>Priority</th><th>Rule</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>AWSManagedRulesAmazonIpReputation</td><td>Block known bad IPs</td></tr>
+            <tr><td>2</td><td>AWSManagedRulesCommonRuleSet</td><td>Block OWASP Top 10</td></tr>
+            <tr><td>3</td><td>RateLimit-1000-per-5min</td><td>Rate limit → 429</td></tr>
+            <tr><td>4</td><td>SQLi-Custom (body+querystring)</td><td>Block → 403</td></tr>
+            <tr><td>5</td><td>GeoBlock (configurable)</td><td>Count (IPL use case)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Chaos Experiment Catalog</h5>
+        <table>
+          <thead><tr><th>Experiment</th><th>Injection</th><th>Expected Behavior</th><th>Rollback</th></tr></thead>
+          <tbody>
+            <tr><td>Origin kill</td><td>Return 503 from origin</td><td>CloudFront serves S3 fallback &lt;2s</td><td>Remove 503 rule</td></tr>
+            <tr><td>Spot drain</td><td>kubectl drain spot-node-1</td><td>Pods reschedule to On-Demand within 3 min</td><td>kubectl uncordon</td></tr>
+            <tr><td>DynamoDB throttle</td><td>Reduce read capacity to 1</td><td>Redis cache absorbs 95% reads</td><td>Restore capacity</td></tr>
+            <tr><td>Kinesis shard loss</td><td>Stop consumer process</td><td>Alert fires; events buffered in shard</td><td>Restart consumer</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-test">Testing</span> Security &amp; Performance Validation</h4>
+    <ul class="task-list">
+      <li><strong>TC-401</strong> WAF: send SQL injection payload <code style="font-size:11px">?id=1'; DROP TABLE sessions--</code> → HTTP 403, WAF sampled log shows block</li>
+      <li><strong>TC-402</strong> WAF rate limit: send 1100 requests from same IP in 5 min → requests 1001+ receive 429</li>
+      <li><strong>TC-403</strong> JMeter 1000 users: p50 &lt;200ms, p95 &lt;800ms, p99 &lt;2s, error rate &lt;1%</li>
+      <li><strong>TC-404</strong> Chaos origin kill: VLC stream continues playing within 4s using S3 fallback; no black screen</li>
+      <li><strong>TC-405</strong> Secrets Manager: rotate credential; verify application continues functioning without restart (reads new secret)</li>
+      <li><strong>TC-406</strong> EKS: kubectl drain spot nodes; application pods rescheduled; /health returns 200 throughout</li>
+    </ul>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-qa">QA Gates</span> Security Sign-off Checklist</h4>
+    <table>
+      <thead><tr><th>Gate</th><th>Criterion</th><th>Validated By</th></tr></thead>
+      <tbody>
+        <tr><td>SEC-G1</td><td>WAF blocks SQL injection + rate-limited IPs; logs sampled in CloudWatch</td><td>Security Lead + TPM</td></tr>
+        <tr><td>SEC-G2</td><td>No IAM role has wildcard * on any destructive action (delete, create, admin)</td><td>IAM Specialist + Tech Lead</td></tr>
+        <tr><td>SEC-G3</td><td>All DB credentials in Secrets Manager; no plaintext in .env or code</td><td>Security Lead</td></tr>
+        <tr><td>SEC-G4</td><td>Shield Standard active on CloudFront distribution</td><td>Security Lead</td></tr>
+        <tr><td>SEC-G5</td><td>JMeter load test: 99th percentile latency &lt;2s at 1000 users</td><td>QA Automation + TPM</td></tr>
+        <tr><td>SEC-G6</td><td>Chaos report: all 4 experiments pass with documented MTTR</td><td>TPM + Tech Lead</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ SPRINT 6 ═══ -->
+<div id="s-s6" class="section">
+  <div class="section-head"><h2>Sprint 6 — CI/CD &amp; Production Go-Live</h2><span class="badge badge-green">Weeks 11–12 · 50 SP · Phases 11, 12</span></div>
+
+  <div class="card" style="border-left:3px solid var(--green-200)">
+    <h4>Sprint Goal</h4>
+    <p style="margin-top:6px;font-size:13px;color:var(--color-text-primary)">Complete the CI/CD pipeline (CodePipeline + CodeBuild + ECR), execute the full end-to-end validation suite, conduct the final stakeholder demo, obtain go/no-go decision from the CTO, and hand over the complete runbook + architecture documentation. Sprint 6 ends with a signed production sign-off or a documented remediation plan.</p>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-planning">Planning</span> Sprint 6 Backlog</h4>
+    <table>
+      <thead><tr><th>Story ID</th><th>Story</th><th>SP</th><th>Team</th></tr></thead>
+      <tbody>
+        <tr><td>S6-01</td><td>ECR repository: create, apply lifecycle policy (keep 10 images)</td><td><span class="sp-box">3</span></td><td>DevOps Lead</td></tr>
+        <tr><td>S6-02</td><td>CodeBuild buildspec.yml: lint → test → docker build → ECR push</td><td><span class="sp-box">8</span></td><td>DevOps Lead</td></tr>
+        <tr><td>S6-03</td><td>CodePipeline: Source (GitHub) → Build (CodeBuild) → Deploy (EKS helm upgrade)</td><td><span class="sp-box">8</span></td><td>DevOps Lead</td></tr>
+        <tr><td>S6-04</td><td>Pipeline approval gate: manual approval before prod deploy</td><td><span class="sp-box">3</span></td><td>DevOps Lead + TPM</td></tr>
+        <tr><td>S6-05</td><td>Rollback strategy: helm rollback command tested; EKS deployment history validated</td><td><span class="sp-box">5</span></td><td>DevOps Lead + SRE</td></tr>
+        <tr><td>S6-06</td><td>Full E2E validation suite: all 10 checklist items from SKILL.md §12</td><td><span class="sp-box">8</span></td><td>QA Automation</td></tr>
+        <tr><td>S6-07</td><td>Production runbook: incident playbooks, escalation contacts, teardown guide</td><td><span class="sp-box">5</span></td><td>SRE + TPM</td></tr>
+        <tr><td>S6-08</td><td>Architecture documentation: finalize ADRs, update SKILL.md, cost model</td><td><span class="sp-box">3</span></td><td>Tech Lead + TPM</td></tr>
+        <tr><td>S6-09</td><td>Final E2E demo: live CMAF stream + AI scaling + WAF block + CloudWatch dashboard</td><td><span class="sp-box">3</span></td><td>All Teams</td></tr>
+        <tr><td>S6-10</td><td>Go/no-go review with CTO; sign-off or remediation backlog</td><td><span class="sp-box">2</span></td><td>TPM</td></tr>
+        <tr><td>S6-11</td><td>Program retrospective; lessons learned doc; team celebration</td><td><span class="sp-box">2</span></td><td>All Teams</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sprint-phase">
+    <h4><span class="phase-tag phase-deploy">Deployment</span> Production Deployment Checklist</h4>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Pre-Deployment (T-24h)</h5>
+        <ul class="task-list">
+          <li>All QA gates from Sprints 1–5 are green</li>
+          <li>Security sign-off from Security Lead</li>
+          <li>Billing alarm active and tested</li>
+          <li>CloudWatch alarms configured with SNS → PagerDuty</li>
+          <li>Rollback procedure tested and documented (&lt;5 min MTTR)</li>
+          <li>Load test report reviewed and approved by CTO</li>
+          <li>All Secrets Manager secrets rotated within last 7 days</li>
+          <li>EKS pre-scale: 10 On-Demand replicas, 20 Spot replicas standing by</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">Deployment Day (Go-Live)</h5>
+        <ul class="task-list">
+          <li>T-60 min: SageMaker AI pre-scale invocation; replicas confirmed</li>
+          <li>T-30 min: WAF active; Shield Standard confirmed; DDoS baseline set</li>
+          <li>T-15 min: CloudFront distribution status: Deployed; Route 53 health checks: Healthy</li>
+          <li>T-5 min: TPM approves CodePipeline manual gate → production deploy triggered</li>
+          <li>T+0 min: Live event starts; monitor CloudWatch dashboard</li>
+          <li>T+5 min: Verify p95 latency &lt;800ms; error rate &lt;0.01%; CDN cache hit &gt;95%</li>
+          <li>T+30 min: Checkpoint review with Tech Lead; issue Slack status update</li>
+          <li>Post-event: EKS scale-down; cost explorer check; incident report (if any)</li>
+        </ul>
+      </div>
+    </div>
+    <div style="padding:12px;background:var(--red-50);border-radius:8px;margin-top:12px">
+      <h5 style="color:var(--red-800);margin-bottom:6px"><i class="ti ti-alert-octagon" aria-hidden="true"></i> Rollback Triggers (Automatic + Manual)</h5>
+      <ul class="task-list">
+        <li><strong>Auto-rollback</strong>: If EKS deployment health check fails after 5 min → helm rollback automatically</li>
+        <li><strong>Manual-rollback</strong>: If 5xx rate &gt;1% for &gt;3 min → TPM calls: <code style="font-size:11px">helm rollback jio-streaming 1 --namespace production</code></li>
+        <li><strong>Full incident</strong>: If CloudFront origin fails → S3 static fallback already active (requires no action)</li>
+        <li><strong>Cost emergency</strong>: If billing alarm fires → immediately execute teardown-all.sh for non-critical services</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ CEREMONIES ═══ -->
+<div id="s-ceremonies" class="section">
+  <div class="section-head"><h2>Agile Ceremonies Playbook</h2></div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px">Daily Stand-up — 15 Minutes, Every Weekday 09:30</h3>
+    <div class="grid-3">
+      <div class="standup-box">
+        <h5><i class="ti ti-check" aria-hidden="true"></i> Yesterday</h5>
+        <p>What did you complete? Link Jira ticket. State story points moved to Done. Be specific — not "worked on IAM" but "created EKS cluster role, attached AmazonEKSClusterPolicy, validated via IAM Simulator. TC-006 ✅"</p>
+      </div>
+      <div class="standup-box">
+        <h5><i class="ti ti-player-play" aria-hidden="true"></i> Today</h5>
+        <p>What will you complete today? Commit to a specific story or subtask. Link ticket. If you're blocked on something, state it here but don't solve it in stand-up — take it to the parking lot.</p>
+      </div>
+      <div class="standup-box">
+        <h5><i class="ti ti-alert-triangle" aria-hidden="true"></i> Blockers</h5>
+        <p>Hard blockers only — things that will prevent you from completing today's task. Examples: AWS permission denied (needs IAM change), cross-team dependency not delivered, unclear acceptance criteria. Immediate action from TPM after stand-up.</p>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <h4 style="margin-bottom:10px">TPM Stand-up Facilitation Script</h4>
+    <table>
+      <thead><tr><th>Min</th><th>Action</th><th>TPM Technique</th></tr></thead>
+      <tbody>
+        <tr><td>0:00</td><td>Open with sprint day number and burndown status</td><td>"Day 6 of 10, Sprint 2. We're at 28/52 SP — 2 SP behind ideal. Let's keep it tight."</td></tr>
+        <tr><td>0:30</td><td>Go team by team (Platform → Media → Data → Security → DevOps)</td><td>Each person gets 60 seconds. Cut long explanations: "Let's take that offline."</td></tr>
+        <tr><td>13:00</td><td>Blocker triage</td><td>For each blocker: who resolves it, by when? Capture in Slack #blockers channel immediately.</td></tr>
+        <tr><td>14:00</td><td>Cross-team dependency callout</td><td>"Platform: Media team needs the S3 bucket URL by noon. Can you confirm?"</td></tr>
+        <tr><td>15:00</td><td>Close with energy</td><td>"Good. Let's hit those points. Reach out if anything changes. Back here at 09:30 tomorrow."</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Sprint Planning — 2 Hours, Day 1 of Each Sprint</h3>
+    <table>
+      <thead><tr><th>Time Block</th><th>Activity</th><th>Facilitator</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>0:00–0:20</td><td>Sprint goal definition: TPM proposes, team refines, goal written on whiteboard</td><td>TPM</td><td>1-sentence sprint goal</td></tr>
+        <tr><td>0:20–0:40</td><td>Capacity planning: each engineer declares available hours; subtract PTO + meetings</td><td>TPM</td><td>Capacity table per team</td></tr>
+        <tr><td>0:40–1:10</td><td>Backlog grooming: Tech Lead walks each story; team asks clarifying questions</td><td>Tech Lead</td><td>All stories have clear acceptance criteria</td></tr>
+        <tr><td>1:10–1:40</td><td>Story pointing (Planning Poker): teams vote in parallel on story size (1,2,3,5,8,13)</td><td>TPM</td><td>All selected stories have SP estimates</td></tr>
+        <tr><td>1:40–1:55</td><td>Sprint commitment: team selects stories up to 90% capacity; TPM confirms with each lead</td><td>TPM</td><td>Committed backlog in Jira sprint</td></tr>
+        <tr><td>1:55–2:00</td><td>Risk callout: any stories with external dependencies or unknowns flagged as risky</td><td>TPM</td><td>Risky stories flagged; spike task added if needed</td></tr>
+      </tbody>
+    </table>
+    <div style="margin-top:12px">
+      <h5 style="margin-bottom:8px">Story Point Sizing Reference</h5>
+      <div class="grid-auto">
+        <div class="card-sm" style="border-left:3px solid var(--teal-200)"><h5>1 SP</h5><p>Single AWS CLI command with verification. &lt;1 hour work.</p></div>
+        <div class="card-sm" style="border-left:3px solid var(--blue-200)"><h5>2 SP</h5><p>Simple config change, tag update, or IAM policy modification. 1–2 hrs.</p></div>
+        <div class="card-sm" style="border-left:3px solid var(--amber-200)"><h5>3 SP</h5><p>Multiple CLI commands with integration test. Half-day task.</p></div>
+        <div class="card-sm" style="border-left:3px solid var(--amber-200)"><h5>5 SP</h5><p>Full AWS service setup with testing. 1-day task. Cross-team interface.</p></div>
+        <div class="card-sm" style="border-left:3px solid var(--coral-200)"><h5>8 SP</h5><p>Multi-step complex setup. Simulation + AWS blocks. 1.5–2 day task.</p></div>
+        <div class="card-sm" style="border-left:3px solid var(--red-200)"><h5>13 SP</h5><p>Large story — should be split. Full sub-system with integration tests.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Sprint Review &amp; Retrospective — End of Each Sprint</h3>
+    <div class="grid-2">
+      <div>
+        <h4 style="margin-bottom:8px">Sprint Review (1 hour)</h4>
+        <table>
+          <thead><tr><th>Time</th><th>Activity</th></tr></thead>
+          <tbody>
+            <tr><td>0:00–0:05</td><td>TPM: sprint goal achieved? SP delivered vs committed</td></tr>
+            <tr><td>0:05–0:40</td><td>Live demo by each team lead: show working AWS resources, not slides. Open AWS console. Run validation commands.</td></tr>
+            <tr><td>0:40–0:55</td><td>Stakeholder Q&amp;A and feedback captured</td></tr>
+            <tr><td>0:55–1:00</td><td>TPM: announce next sprint goal; preview key risks</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h4 style="margin-bottom:8px">Sprint Retrospective (1 hour) — Start/Stop/Continue</h4>
+        <div class="standup-box" style="border-left-color:var(--teal-200)">
+          <h5 style="color:var(--teal-600)">Start</h5>
+          <p>What should we start doing? Examples: peer code reviews before merging CLI scripts; adding --dry-run flag to destructive commands; using SSM Parameter Store earlier.</p>
+        </div>
+        <div class="standup-box" style="border-left-color:var(--red-400)">
+          <h5 style="color:var(--red-800)">Stop</h5>
+          <p>What should we stop doing? Examples: hardcoding resource IDs in scripts; creating AWS resources without tags; running EKS cluster overnight without monitoring costs.</p>
+        </div>
+        <div class="standup-box" style="border-left-color:var(--amber-200)">
+          <h5 style="color:var(--amber-600)">Continue</h5>
+          <p>What's working well? Examples: simulation-first approach saving cost; SSM parameter store for cross-team IDs; daily blocker triage working fast.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Backlog Refinement — 1 Hour, Every Wednesday 15:00</h3>
+    <ul class="task-list">
+      <li><strong>0:00–0:15</strong> TPM reviews next sprint's top backlog items; removes stale stories; re-prioritizes based on program risks</li>
+      <li><strong>0:15–0:45</strong> Tech Lead walks unprepared stories; team asks questions to remove ambiguity; acceptance criteria written for each</li>
+      <li><strong>0:45–0:55</strong> Rough sizing (t-shirt: S/M/L/XL) for stories 2 sprints out; anything XL must be split before sprint planning</li>
+      <li><strong>0:55–1:00</strong> TPM updates sprint board; flags blocked stories in #backlog Slack channel</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ BUDGET ═══ -->
+<div id="s-budget" class="section">
+  <div class="section-head"><h2>Budget Command</h2></div>
+
+  <div class="grid-4" style="margin-bottom:16px">
+    <div class="metric-card"><span class="lbl">Total Program Budget</span><span class="val">$295K</span></div>
+    <div class="metric-card"><span class="lbl">Labor (78%)</span><span class="val">$231K</span></div>
+    <div class="metric-card"><span class="lbl">AWS Infra (1%)</span><span class="val">$3K</span></div>
+    <div class="metric-card"><span class="lbl">Tooling + Training (2%)</span><span class="val">$6K</span></div>
+    <div class="metric-card"><span class="lbl">Contingency (10%)</span><span class="val">$29.5K</span></div>
+    <div class="metric-card"><span class="lbl">Remaining Budget</span><span class="val">$295K</span></div>
+    <div class="metric-card"><span class="lbl">Spent to Date</span><span class="val">$0</span></div>
+    <div class="metric-card"><span class="lbl">Budget Variance</span><span class="val">0%</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px">Labor Budget by Team (12-week program)</h3>
+    <div class="budget-bar-wrap"><span class="bname">Platform Team (4)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:25%;background:var(--blue-200)"></div></div><span class="bval">$60,000</span></div>
+    <div class="budget-bar-wrap"><span class="bname">Media Team (3)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:19%;background:var(--amber-200)"></div></div><span class="bval">$45,000</span></div>
+    <div class="budget-bar-wrap"><span class="bname">Data &amp; AI Team (3)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:21%;background:var(--purple-200)"></div></div><span class="bval">$48,000</span></div>
+    <div class="budget-bar-wrap"><span class="bname">Security Team (2)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:16%;background:var(--red-200)"></div></div><span class="bval">$38,000</span></div>
+    <div class="budget-bar-wrap"><span class="bname">DevOps / SRE (3)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:18%;background:var(--teal-200)"></div></div><span class="bval">$42,000</span></div>
+    <div class="budget-bar-wrap"><span class="bname">TPM + Tech Lead (2)</span><div class="budget-bar-outer"><div class="budget-bar-inner" style="width:21%;background:var(--coral-200)"></div></div><span class="bval">$48,000</span></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px">AWS Infrastructure Budget by Phase</h3>
+    <table>
+      <thead><tr><th>Phase</th><th>Service</th><th>Cost Model</th><th>Dev Budget</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td>0–2</td><td>VPC, IAM, S3 (5GB)</td><td>Free Tier</td><td>$0</td><td>—</td></tr>
+        <tr><td>3</td><td>EKS cluster ($0.10/hr × 3h demo)</td><td>On-demand</td><td>$2.00</td><td>Delete after demo; Minikube for dev</td></tr>
+        <tr><td>3</td><td>EC2 t3.medium nodes (2 × 3h)</td><td>On-demand</td><td>$0.75</td><td>Delete after demo</td></tr>
+        <tr><td>4</td><td>MediaLive channels</td><td>~$15/hr</td><td>$0</td><td>FFmpeg sim; never activate</td></tr>
+        <tr><td>5</td><td>CloudFront (1TB free + 10M req)</td><td>Free Tier</td><td>$0</td><td>Stay within free tier limits</td></tr>
+        <tr><td>6</td><td>SageMaker ml.t2.medium endpoint</td><td>Free Trial</td><td>$0</td><td>Delete endpoint after testing</td></tr>
+        <tr><td>7</td><td>DynamoDB (25GB + 25 RCU/WCU free)</td><td>Free Tier</td><td>$0</td><td>—</td></tr>
+        <tr><td>7</td><td>Kinesis (1 shard free)</td><td>Free Tier</td><td>$0</td><td>—</td></tr>
+        <tr><td>7</td><td>ElastiCache Redis</td><td>Not free</td><td>$0</td><td>Docker Redis sim; never AWS activate</td></tr>
+        <tr><td>8</td><td>CloudWatch (10 alarms, 3 dashboards free)</td><td>Free Tier</td><td>$0</td><td>—</td></tr>
+        <tr><td>9</td><td>WAF WebACL ($5/mo) + rules</td><td>Paid</td><td>$15</td><td>Enable only in Sprint 5; disable after</td></tr>
+        <tr><td>9</td><td>Secrets Manager ($0.40/secret/mo × 3)</td><td>Paid</td><td>$3.60</td><td>Required; minimal cost</td></tr>
+        <tr><td>9–12</td><td>NAT Gateway (if activated, $0.045/hr)</td><td>Paid</td><td>$0</td><td>Use NAT Instance t2.micro instead</td></tr>
+        <tr><td>11</td><td>CodePipeline (1 free pipeline)</td><td>Free Tier</td><td>$0</td><td>—</td></tr>
+        <tr><td colspan="3"><strong>Total AWS Dev Budget</strong></td><td><strong>~$22</strong></td><td>Hard ceiling: $50 (with buffer)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Sprint-by-Sprint Budget Allocation</h3>
+    <table>
+      <thead><tr><th>Sprint</th><th>Labor</th><th>AWS Infra</th><th>Tooling</th><th>Total</th><th>Cumulative</th></tr></thead>
+      <tbody>
+        <tr><td>Sprint 1</td><td>$38,500</td><td>$2</td><td>$200</td><td>$38,702</td><td>$38,702</td></tr>
+        <tr><td>Sprint 2</td><td>$38,500</td><td>$5</td><td>$200</td><td>$38,705</td><td>$77,407</td></tr>
+        <tr><td>Sprint 3</td><td>$38,500</td><td>$3</td><td>$200</td><td>$38,703</td><td>$116,110</td></tr>
+        <tr><td>Sprint 4</td><td>$38,500</td><td>$1</td><td>$200</td><td>$38,701</td><td>$154,811</td></tr>
+        <tr><td>Sprint 5</td><td>$38,500</td><td>$8</td><td>$200</td><td>$38,708</td><td>$193,519</td></tr>
+        <tr><td>Sprint 6</td><td>$38,500</td><td>$3</td><td>$200</td><td>$38,703</td><td>$232,222</td></tr>
+        <tr style="background:var(--amber-50)"><td><strong>Training</strong></td><td></td><td></td><td><strong>$3,000</strong></td><td><strong>$3,000</strong></td><td><strong>$235,222</strong></td></tr>
+        <tr style="background:var(--amber-50)"><td><strong>Contingency (10%)</strong></td><td></td><td></td><td></td><td><strong>$23,522</strong></td><td><strong>$258,744</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════ VELOCITY ═══ -->
+<div id="s-velocity" class="section">
+  <div class="section-head"><h2>Velocity &amp; Burndown</h2></div>
+
+  <div class="grid-4" style="margin-bottom:16px">
+    <div class="metric-card"><span class="lbl">Total Story Points</span><span class="val">276</span></div>
+    <div class="metric-card"><span class="lbl">Target Velocity</span><span class="val">46 SP/sprint</span></div>
+    <div class="metric-card"><span class="lbl">Sprints</span><span class="val">6</span></div>
+    <div class="metric-card"><span class="lbl">Sprint Length</span><span class="val">10 days</span></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:20px;height:3px;background:#378ADD;display:inline-block;border-radius:2px"></span>Committed SP</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:20px;height:3px;background:#1D9E75;display:inline-block;border-radius:2px"></span>Delivered SP</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:20px;height:3px;background:#BA7517;border:none;display:inline-block;border-radius:2px"></span>Velocity target</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="velocityChart" role="img" aria-label="Bar chart showing committed vs delivered story points across 6 sprints, with velocity target line at 46 SP.">Sprint velocity data: S1 40/40, S2 52/52, S3 48/48, S4 44/44, S5 42/42, S6 50/50 story points committed vs delivered.</canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Program Burndown Chart</h3>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:20px;height:3px;background:#E24B4A;display:inline-block"></span>Ideal burndown</span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:12px"><span style="width:20px;height:3px;background:#378ADD;border-style:dashed;display:inline-block"></span>Actual burndown</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="burndownChart" role="img" aria-label="Line chart showing ideal vs actual burndown of 276 story points over 12 weeks.">Burndown: starts at 276 SP, ideal line decreases to 0 at week 12, actual line tracks close to ideal.</canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Sprint Velocity Analysis</h3>
+    <table>
+      <thead><tr><th>Sprint</th><th>Committed</th><th>Delivered</th><th>Velocity</th><th>% Completion</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Sprint 1</td><td>40</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>Baseline sprint; establishing rhythm</td></tr>
+        <tr><td>Sprint 2</td><td>52</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>High SP due to EKS + media complexity</td></tr>
+        <tr><td>Sprint 3</td><td>48</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>CDN + SageMaker — moderate complexity</td></tr>
+        <tr><td>Sprint 4</td><td>44</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>Data layer — well-understood territory</td></tr>
+        <tr><td>Sprint 5</td><td>42</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>Security + load test — focused work</td></tr>
+        <tr><td>Sprint 6</td><td>50</td><td>—</td><td>—</td><td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%"></div></div></td><td>CI/CD + E2E — high coordination</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ RISK ═══ -->
+<div id="s-risk" class="section">
+  <div class="section-head"><h2>Risk Register &amp; Conflict Resolution</h2></div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Risk Register — Top 12 Risks</h3>
+    <table>
+      <thead><tr><th>ID</th><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Score</th><th>Mitigation</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td>R-01</td><td>EKS cluster left running overnight → cost overrun</td><td><span class="badge badge-red">High</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--amber-600)">12</span></td><td>Billing alarm at $5; nightly automated check; teardown in Definition of Done</td><td>Platform Lead</td></tr>
+        <tr><td>R-02</td><td>MediaLive accidentally activated → $15/hr charge</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-red">High</span></td><td><span style="font-weight:500;color:var(--red-800)">15</span></td><td>MediaLive config files labeled [NEVER ACTIVATE IN DEV]; separate AWS account for prod</td><td>TPM</td></tr>
+        <tr><td>R-03</td><td>SageMaker model accuracy &lt;75% → AI pre-scale unreliable</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--amber-600)">9</span></td><td>Fall back to scheduled manual scaling; improve training data in Sprint 3</td><td>ML Engineer</td></tr>
+        <tr><td>R-04</td><td>CMAF stream exceeds 4s latency under load</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-red">High</span></td><td><span style="font-weight:500;color:var(--red-800)">15</span></td><td>Tune MediaPackage segment size to 1s CMAF; reduce CloudFront min TTL; JMeter test before go-live</td><td>Media Lead</td></tr>
+        <tr><td>R-05</td><td>IAM policy too permissive → security audit failure</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-red">High</span></td><td><span style="font-weight:500;color:var(--red-800)">15</span></td><td>IAM Access Analyzer weekly; no wildcard * rule in Definition of Done</td><td>Security Lead</td></tr>
+        <tr><td>R-06</td><td>Lambda@Edge cold start &gt;500ms → viewer experience degraded</td><td><span class="badge badge-teal">Low</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--blue-600)">6</span></td><td>Keep Lambda small (&lt;50ms execution); provision concurrency for expected load</td><td>Platform Lead</td></tr>
+        <tr><td>R-07</td><td>DynamoDB provisioned throughput exceeded → 400 errors</td><td><span class="badge badge-teal">Low</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--blue-600)">6</span></td><td>Enable auto-scaling on DynamoDB; Redis cache absorbs read traffic; monitor ConsumedCapacity</td><td>Data Lead</td></tr>
+        <tr><td>R-08</td><td>Key engineer unavailable (sick/PTO) during critical sprint</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--amber-600)">9</span></td><td>All scripts documented; runbooks in Git; cross-train team leads on adjacent services</td><td>TPM</td></tr>
+        <tr><td>R-09</td><td>AWS Free Tier limit exceeded silently</td><td><span class="badge badge-amber">Medium</span></td><td><span class="badge badge-teal">Low</span></td><td><span style="font-weight:500;color:var(--blue-600)">6</span></td><td>Daily AWS Cost Explorer check; tag all resources; billing alarm at $5</td><td>Platform Lead</td></tr>
+        <tr><td>R-10</td><td>Kinesis consumer lag under load → analytics data lost</td><td><span class="badge badge-teal">Low</span></td><td><span class="badge badge-amber">Medium</span></td><td><span style="font-weight:500;color:var(--blue-600)">4</span></td><td>CloudWatch Kinesis lag alarm; consumer group with multiple instances in EKS</td><td>Analytics Eng</td></tr>
+        <tr><td>R-11</td><td>CodePipeline deploy breaks prod during Sprint 6</td><td><span class="badge badge-teal">Low</span></td><td><span class="badge badge-red">High</span></td><td><span style="font-weight:500;color:var(--amber-600)">10</span></td><td>Manual approval gate in pipeline; blue/green deployment via EKS; rollback &lt;5min tested in Sprint 5</td><td>DevOps Lead</td></tr>
+        <tr><td>R-12</td><td>CTO demo failure (stream not playing)</td><td><span class="badge badge-teal">Low</span></td><td><span class="badge badge-red">High</span></td><td><span style="font-weight:500;color:var(--amber-600)">8</span></td><td>E2E validation script run D9; demo environment separate from dev; fallback demo video ready</td><td>TPM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px">Conflict Resolution Framework — L1–L4 Escalation</h3>
+    <div class="escalation-row" style="border-bottom:0.5px solid var(--color-border-tertiary);font-weight:500;font-size:11px;color:var(--color-text-secondary)"><div>LEVEL</div><div>OWNERSHIP</div><div>SCOPE &amp; TRIGGER</div><div>RESOLUTION TIME</div></div>
+    <div class="escalation-row">
+      <div><span class="badge badge-teal">L1</span></div>
+      <div style="font-size:12px">Team members directly</div>
+      <div style="font-size:12px">Technical disagreements between 2 engineers. Example: FFmpeg config choice, IAM policy scope debate. First, seek common ground via shared acceptance criteria. If stuck, reference ADR.</div>
+      <div style="font-size:12px">Same day</div>
+    </div>
+    <div class="escalation-row">
+      <div><span class="badge badge-amber">L2</span></div>
+      <div style="font-size:12px">Team Lead + TPM</div>
+      <div style="font-size:12px">Cross-team conflict or blocker unresolved after 4h. Example: Platform hasn't delivered VPC IDs blocking Media team's S3 config. TPM facilitates 15-min sync; assigns owner and hard deadline.</div>
+      <div style="font-size:12px">Same day</div>
+    </div>
+    <div class="escalation-row">
+      <div><span class="badge badge-coral">L3</span></div>
+      <div style="font-size:12px">TPM + Tech Lead + relevant leads</div>
+      <div style="font-size:12px">Sprint-impacting conflict. Example: Security lead demands IAM redesign that will delay Sprint 2 by 3 days. TPM convenes a 30-min architecture decision meeting. Decision documented in ADR within 24h.</div>
+      <div style="font-size:12px">24 hours</div>
+    </div>
+    <div class="escalation-row">
+      <div><span class="badge badge-red">L4</span></div>
+      <div style="font-size:12px">TPM escalates to CTO / Sponsor</div>
+      <div style="font-size:12px">Program-threatening conflict or blocker. Example: critical cloud architecture rework needed post-Sprint 3 that impacts go-live date; resource reallocation request; budget overrun &gt;15%. TPM prepares 1-page brief: situation, options, recommendation, ask.</div>
+      <div style="font-size:12px">48 hours</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Common Conflict Scenarios &amp; Resolution Scripts</h3>
+    <div class="conflict-card">
+      <h5 style="color:var(--coral-800);margin-bottom:6px"><i class="ti ti-git-branch" aria-hidden="true"></i> Technical: "My approach is better" Deadlock</h5>
+      <p><strong>Scenario:</strong> Platform Lead wants NAT Gateway; Network Engineer insists on NAT Instance.</p>
+      <p><strong>Resolution:</strong> TPM facilitates decision using 3 criteria: cost, availability, maintenance. NAT Gateway = $32/mo but managed; NAT Instance = $0 (free tier) but needs manual HA. For dev environment: NAT Instance wins. Document in ADR-007. Decision is final; no reopening without new evidence.</p>
+      <p style="margin-top:4px"><strong>Script:</strong> "We've heard both sides. Given our dev environment constraint of Free Tier, NAT Instance gives us zero cost and full control. We'll note in the ADR that production would use NAT Gateway for HA. This decision is logged and closed."</p>
+    </div>
+    <div class="conflict-card">
+      <h5 style="color:var(--coral-800);margin-bottom:6px"><i class="ti ti-clock" aria-hidden="true"></i> Timeline: Team underestimates story complexity mid-sprint</h5>
+      <p><strong>Scenario:</strong> EKS cluster setup (S2-04, 8 SP) is now day 5 and still not complete; team lead says it needs 3 more days.</p>
+      <p><strong>Resolution (TPM actions):</strong> 1) Pull 1 engineer from low-priority story to pair on EKS. 2) Descope S2-08 (ALB Ingress) to Sprint 3. 3) Update sprint board; communicate to stakeholders same day. 4) Retro action: add spike task for complex AWS setups in future sprints.</p>
+    </div>
+    <div class="conflict-card">
+      <h5 style="color:var(--coral-800);margin-bottom:6px"><i class="ti ti-users" aria-hidden="true"></i> Interpersonal: Passive-aggressive behavior in stand-ups</h5>
+      <p><strong>Scenario:</strong> Media Lead consistently says "blocked by Platform" in stand-ups without specifics; Platform Lead becomes defensive.</p>
+      <p><strong>Resolution:</strong> TPM has a 1:1 with each lead separately within 24h. Establish: "In stand-ups, blockers must include: what you need, from whom, by when." Create a #blockers Slack channel with a form: [BLOCKER] [NEEDS X] [FROM Y] [BY Z]. Remove the emotional charge by making it process-driven.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════ COMMS ═══ -->
+<div id="s-comms" class="section">
+  <div class="section-head"><h2>Stakeholder Communications Plan</h2></div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Stakeholder Register</h3>
+    <table>
+      <thead><tr><th>Stakeholder</th><th>Role</th><th>Interest</th><th>Influence</th><th>Engagement</th></tr></thead>
+      <tbody>
+        <tr><td>CTO</td><td>Program sponsor</td><td>Architecture quality, cost, timeline</td><td><span class="badge badge-red">Very High</span></td><td>Sprint 2 &amp; 6 demos; weekly 1-pager</td></tr>
+        <tr><td>Engineering VP</td><td>Resource owner</td><td>Team utilization, delivery dates, risk</td><td><span class="badge badge-amber">High</span></td><td>Biweekly status call; email updates</td></tr>
+        <tr><td>Security Officer</td><td>Compliance gatekeeper</td><td>IAM, WAF, compliance sign-off</td><td><span class="badge badge-amber">High</span></td><td>Sprint 5 sign-off meeting</td></tr>
+        <tr><td>AWS Solutions Architect</td><td>Technical advisor</td><td>Architecture best practices, cost</td><td><span class="badge badge-blue">Medium</span></td><td>Architecture review board (ad-hoc)</td></tr>
+        <tr><td>Finance Lead</td><td>Budget approver</td><td>Costs, Free Tier optimization, overrun risk</td><td><span class="badge badge-amber">High</span></td><td>Monthly budget report; alert on $5 alarm</td></tr>
+        <tr><td>Product Manager</td><td>Feature owner</td><td>Feature completeness, demo quality</td><td><span class="badge badge-blue">Medium</span></td><td>Sprint review attendee; weekly sync</td></tr>
+        <tr><td>Team Leads (6)</td><td>Execution owners</td><td>Task clarity, unblocking, velocity</td><td><span class="badge badge-blue">Medium</span></td><td>Daily stand-up; 1:1 weekly</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Communication Cadence Matrix</h3>
+    <table>
+      <thead><tr><th>Communication</th><th>Audience</th><th>Format</th><th>Frequency</th><th>Channel</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td>Daily Stand-up</td><td>All Engineers</td><td>Live 15-min sync</td><td>Daily 09:30</td><td>Zoom + Jira board</td><td>TPM</td></tr>
+        <tr><td>Sprint Status 1-pager</td><td>CTO + Engineering VP</td><td>Email template</td><td>Biweekly (Friday)</td><td>Email</td><td>TPM</td></tr>
+        <tr><td>Budget Flash</td><td>Finance Lead + Engineering VP</td><td>2-row table: planned vs actual</td><td>Weekly (Monday)</td><td>Email</td><td>TPM</td></tr>
+        <tr><td>Technical Blockers</td><td>All Leads</td><td>#blockers Slack post</td><td>As needed</td><td>Slack</td><td>TPM</td></tr>
+        <tr><td>Sprint Review Demo</td><td>All + Stakeholders</td><td>Live Zoom demo</td><td>Every 2 weeks</td><td>Zoom</td><td>TPM + Leads</td></tr>
+        <tr><td>Architecture Review</td><td>Tech Lead + All Leads</td><td>1h structured meeting</td><td>Sprint 1 kickoff; ad-hoc for ADRs</td><td>Zoom + Confluence</td><td>Tech Lead</td></tr>
+        <tr><td>Incident Report</td><td>CTO + Sponsor</td><td>P1/P2 format: situation, impact, cause, fix, prevention</td><td>Within 2h of incident</td><td>Email + Slack</td><td>TPM + SRE</td></tr>
+        <tr><td>Go/No-Go Decision</td><td>CTO + Sponsor</td><td>3-page brief: status, risk, recommendation</td><td>Week 12, Day 9</td><td>In-person or Zoom</td><td>TPM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Weekly Status Report Template (Every Friday, sent 17:00)</h3>
+    <div style="border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:14px;font-size:12px">
+      <div style="font-weight:500;font-size:14px;margin-bottom:10px;color:var(--color-text-primary)">🔴/🟡/🟢 Jio AWS Streaming — Week [N] Status | Sprint [N] Day [D]</div>
+      <div class="info-row"><span class="info-label">Program Status</span><span class="info-val">[GREEN / YELLOW / RED] — [1-sentence reason]</span></div>
+      <div class="info-row"><span class="info-label">Sprint Progress</span><span class="info-val">[XX] / [YY] SP completed · [N] days remaining</span></div>
+      <div class="info-row"><span class="info-label">Budget Consumed</span><span class="info-val">AWS: $[X] of $50 (dev) · Labor: On track</span></div>
+      <div class="info-row"><span class="info-label">Completed This Week</span><span class="info-val">[3 bullet points: specific deliverables]</span></div>
+      <div class="info-row"><span class="info-label">Next Week Plan</span><span class="info-val">[3 bullet points: specific tasks]</span></div>
+      <div class="info-row"><span class="info-label">Top Risk</span><span class="info-val">[Risk description] — Mitigation: [1 sentence]</span></div>
+      <div class="info-row"><span class="info-label">Decisions Needed</span><span class="info-val">[Any decisions CTO/sponsor needs to make this week]</span></div>
+      <p style="color:var(--color-text-secondary);margin-top:8px;font-size:11px">Full sprint board: [Jira link] · Architecture diagrams: [Confluence link] · AWS console: [link]</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:12px">Go/No-Go Decision Brief Template</h3>
+    <div class="grid-2">
+      <div>
+        <h5 style="margin-bottom:8px">Go Criteria (all must be met)</h5>
+        <ul class="task-list">
+          <li>All 10 Skill Validation Checklist items green</li>
+          <li>JMeter load test: p99 &lt;2s at 1000 users</li>
+          <li>WAF blocking SQL injection in CloudWatch logs</li>
+          <li>Chaos: S3 fallback serves content within 4s of origin failure</li>
+          <li>CI/CD pipeline deploys with manual approval gate working</li>
+          <li>Rollback tested: &lt;5 min MTTR confirmed</li>
+          <li>AWS cost estimate for production reviewed and approved by Finance</li>
+          <li>Security Officer sign-off on IAM + WAF configuration</li>
+        </ul>
+      </div>
+      <div>
+        <h5 style="margin-bottom:8px">No-Go Conditions</h5>
+        <ul class="task-list">
+          <li>Stream latency exceeds 6s in load test</li>
+          <li>WAF misconfigured — blocking legitimate traffic or passing injections</li>
+          <li>IAM audit finds critical overpermission</li>
+          <li>Rollback time &gt;15 min (exceeds SLA)</li>
+          <li>CloudFront origin failover not functioning</li>
+          <li>Budget overrun &gt;15% without Finance approval</li>
+        </ul>
+        <h5 style="margin-top:10px;margin-bottom:8px">Escalation Path</h5>
+        <ul class="task-list">
+          <li>No-go decision → TPM creates remediation backlog (Sprint 7 extension)</li>
+          <li>TPM presents estimated fix timeline (days, not weeks)</li>
+          <li>Partial no-go → go-live with specific features disabled; documented exception</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function(){
+  var navBtns=document.querySelectorAll('.nav-btn');
+  var sections=document.querySelectorAll('.section');
+  navBtns.forEach(function(btn){
+    btn.addEventListener('click',function(){
+      navBtns.forEach(function(b){b.classList.remove('active');});
+      sections.forEach(function(s){s.classList.remove('active');});
+      btn.classList.add('active');
+      var target=document.getElementById(btn.dataset.target);
+      if(target){target.classList.add('active');target.scrollIntoView({block:'start',behavior:'smooth'});}
+    });
+  });
+
+  document.querySelectorAll('.accord-header').forEach(function(h){
+    h.addEventListener('click',function(){
+      var body=h.nextElementSibling;
+      if(body){body.classList.toggle('open');}
+      var icon=h.querySelector('.accord-icon');
+      if(icon){icon.style.transform=body&&body.classList.contains('open')?'rotate(180deg)':'';}
+    });
+  });
+
+  var sprintLabels=['Sprint 1','Sprint 2','Sprint 3','Sprint 4','Sprint 5','Sprint 6'];
+  var committed=[40,52,48,44,42,50];
+  var target=46;
+
+  var vc=document.getElementById('velocityChart');
+  if(vc){
+    new Chart(vc,{
+      type:'bar',
+      data:{
+        labels:sprintLabels,
+        datasets:[
+          {label:'Committed SP',data:committed,backgroundColor:'#378ADD',barPercentage:0.5,categoryPercentage:0.6},
+          {label:'Target',data:committed.map(function(){return target;}),type:'line',borderColor:'#BA7517',borderWidth:2,pointRadius:3,tension:0,fill:false,borderDash:[4,3]}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,max:60,ticks:{autoSkip:false}},x:{ticks:{autoSkip:false}}}
+      }
+    });
+  }
+
+  var totalSP=276;
+  var sprints=6;
+  var bdLabels=['Start','Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7','Wk8','Wk9','Wk10','Wk11','Wk12'];
+  var idealPts=[];
+  for(var i=0;i<=12;i++){idealPts.push(Math.round(totalSP-(totalSP/12)*i));}
+  var actualPts=[276,276,240,240,189,189,143,143,99,99,59,59,0];
+
+  var bc=document.getElementById('burndownChart');
+  if(bc){
+    new Chart(bc,{
+      type:'line',
+      data:{
+        labels:bdLabels,
+        datasets:[
+          {label:'Ideal',data:idealPts,borderColor:'#E24B4A',borderWidth:1.5,pointRadius:2,tension:0.1,fill:false,borderDash:[5,3]},
+          {label:'Actual',data:actualPts,borderColor:'#378ADD',borderWidth:2,pointRadius:3,tension:0.1,fill:false}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,max:300,title:{display:true,text:'Story Points Remaining',font:{size:11}}},x:{ticks:{autoSkip:false,maxRotation:45}}}
+      }
+    });
+  }
+
+  var ganttData=[
+    {label:'Foundation',start:0,span:2,color:'var(--blue-200)'},
+    {label:'Compute+Media',start:2,span:2,color:'var(--amber-200)'},
+    {label:'CDN+AI',start:4,span:2,color:'var(--purple-200)'},
+    {label:'Data+Observ.',start:6,span:2,color:'var(--teal-200)'},
+    {label:'Security+Load',start:8,span:2,color:'#F0997B'},
+    {label:'CI/CD+Go-Live',start:10,span:2,color:'var(--green-200)'},
+    {label:'Platform',start:0,span:4,color:'var(--blue-50)'},
+    {label:'Media Team',start:2,span:4,color:'var(--amber-50)'},
+    {label:'Data/AI',start:4,span:6,color:'var(--purple-50)'},
+    {label:'Security',start:0,span:12,color:'var(--red-50)'},
+    {label:'DevOps/SRE',start:6,span:6,color:'var(--teal-50)'},
+  ];
+  var ganttDiv=document.getElementById('gantt-rows');
+  if(ganttDiv){
+    ganttData.forEach(function(row){
+      var cells='';
+      for(var i=0;i<12;i++){
+        if(i>=row.start&&i<row.start+row.span){
+          cells+='<div style="flex:1;height:28px;border-right:0.5px solid rgba(0,0,0,0.07);position:relative"><div style="position:absolute;top:4px;bottom:4px;left:2px;right:2px;background:'+row.color+';border-radius:3px"></div></div>';
+        } else {
+          cells+='<div style="flex:1;height:28px;border-right:0.5px solid rgba(0,0,0,0.07)"></div>';
+        }
+      }
+      ganttDiv.innerHTML+='<div style="display:flex;margin-bottom:2px"><div style="width:120px;font-size:11px;color:var(--color-text-secondary);padding:6px 8px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+row.label+'</div><div style="flex:1;display:flex">'+cells+'</div></div>';
+    });
+  }
+})();
+</script>
+</html>
