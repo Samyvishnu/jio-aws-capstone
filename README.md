@@ -5,7 +5,9 @@ An interactive, single-file HTML dashboard that serves as a complete Technical P
 # Jio AWS Hyperscale Streaming Platform
 TPM Master Playbook — AWS Live Streaming Architecture
 
-Live site: https://Samyvishnu.github.io/jio-aws-capstone
+**Live site:** https://Samyvishnu.github.io/jio-aws-capstone
+
+Playbook : https://Samyvishnu.github.io/jio-aws-capstone/jio-aws-capstone-playbook.html
 ---
 
 ## Overview
